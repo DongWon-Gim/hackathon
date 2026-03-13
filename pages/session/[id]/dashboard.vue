@@ -17,29 +17,61 @@
         </div>
       </div>
 
+      <!-- Sort controls -->
+      <div class="flex items-center gap-2 mb-4">
+        <span class="text-xs text-ink-muted">정렬:</span>
+        <button
+          class="text-xs px-2.5 py-1 rounded-md transition-colors"
+          :class="sortBy === 'votes' ? 'bg-accent text-white' : 'bg-elevated text-ink-muted hover:text-ink'"
+          @click="sortBy = 'votes'"
+        >
+          투표순
+        </button>
+        <button
+          class="text-xs px-2.5 py-1 rounded-md transition-colors"
+          :class="sortBy === 'latest' ? 'bg-accent text-white' : 'bg-elevated text-ink-muted hover:text-ink'"
+          @click="sortBy = 'latest'"
+        >
+          최신순
+        </button>
+      </div>
+
       <!-- Feedback columns -->
       <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
         <div v-for="cat in categories" :key="cat.value">
           <div class="flex items-center gap-2 mb-3">
             <span class="text-sm font-semibold" :class="cat.textColor">{{ cat.emoji }} {{ cat.label }}</span>
             <span class="font-mono text-xs text-ink-muted bg-elevated px-1.5 py-0.5 rounded">
-              {{ feedbacksByCategory[cat.value]?.length ?? 0 }}
+              {{ sortedFeedbacksByCategory[cat.value]?.length ?? 0 }}
             </span>
           </div>
 
           <EmptyState
-            v-if="!feedbacksByCategory[cat.value]?.length"
+            v-if="!sortedFeedbacksByCategory[cat.value]?.length"
             :message="`${cat.label} 피드백 없음`"
             icon="·"
           />
 
           <div v-else class="space-y-2">
             <div
-              v-for="fb in feedbacksByCategory[cat.value]"
+              v-for="fb in sortedFeedbacksByCategory[cat.value]"
               :key="fb.id"
               class="card p-3 text-sm text-ink leading-relaxed"
             >
-              {{ fb.content }}
+              <p class="mb-2">{{ fb.content }}</p>
+              <div class="flex items-center justify-end">
+                <button
+                  class="flex items-center gap-1.5 text-xs transition-colors px-2 py-1 rounded-md"
+                  :class="fb.hasVoted ? 'text-accent bg-accent/10' : 'text-ink-muted hover:text-ink hover:bg-elevated'"
+                  :disabled="votingId === fb.id"
+                  @click="toggleVote(fb)"
+                >
+                  <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7" />
+                  </svg>
+                  <span class="font-mono">{{ fb.voteCount }}</span>
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -49,15 +81,26 @@
       <div class="card p-5">
         <div class="flex items-center justify-between mb-4">
           <p class="section-label">AI 인사이트</p>
-          <button
-            v-if="isLeader && !insight && session.status === 'CLOSED'"
-            class="btn-primary text-xs"
-            :disabled="generatingInsight || !hasFeedbacks"
-            @click="generateInsight"
-          >
-            <LoadingSpinner v-if="generatingInsight" size="sm" />
-            {{ generatingInsight ? '분석 중...' : '🤖 인사이트 생성' }}
-          </button>
+          <div class="flex items-center gap-2">
+            <button
+              v-if="isLeader && insight"
+              class="text-xs px-2.5 py-1 rounded-md border transition-colors"
+              :class="insight.isShared ? 'border-accent text-accent bg-accent/10 hover:bg-accent/20' : 'border-border text-ink-muted hover:text-ink hover:border-ink-muted'"
+              :disabled="togglingShare"
+              @click="toggleShare"
+            >
+              {{ insight.isShared ? '🔓 공유 중' : '🔒 비공개' }}
+            </button>
+            <button
+              v-if="isLeader && !insight && session.status === 'CLOSED'"
+              class="btn-primary text-xs"
+              :disabled="generatingInsight || !hasFeedbacks"
+              @click="generateInsight"
+            >
+              <LoadingSpinner v-if="generatingInsight" size="sm" />
+              {{ generatingInsight ? '분석 중...' : '🤖 인사이트 생성' }}
+            </button>
+          </div>
         </div>
 
         <div v-if="generatingInsight" class="text-center py-8 text-sm text-ink-muted">
@@ -102,6 +145,9 @@ const { data: feedbacks, refresh: refreshFeedbacks } = await useFetch<Feedback[]
 const { data: insight, refresh: refreshInsight } = await useFetch<Insight | null>(`/api/sessions/${route.params.id}/insights`)
 
 const generatingInsight = ref(false)
+const togglingShare = ref(false)
+const sortBy = ref<'votes' | 'latest'>('latest')
+const votingId = ref<string | null>(null)
 
 const categories = [
   { value: 'KEEP' as const, label: 'Keep', emoji: '✅', textColor: 'text-keep' },
@@ -115,7 +161,53 @@ const feedbacksByCategory = computed(() => {
   return result
 })
 
+const sortedFeedbacksByCategory = computed(() => {
+  const result: Record<string, Feedback[]> = {}
+  for (const cat of ['KEEP', 'PROBLEM', 'TRY']) {
+    const items = [...(feedbacksByCategory.value[cat] ?? [])]
+    if (sortBy.value === 'votes') {
+      items.sort((a, b) => (b.voteCount ?? 0) - (a.voteCount ?? 0))
+    }
+    result[cat] = items
+  }
+  return result
+})
+
 const hasFeedbacks = computed(() => (feedbacks.value?.length ?? 0) > 0)
+
+async function toggleVote(fb: Feedback) {
+  votingId.value = fb.id
+  try {
+    if (fb.hasVoted) {
+      await $fetch(`/api/feedbacks/${fb.id}/vote`, { method: 'DELETE' })
+    } else {
+      await $fetch(`/api/feedbacks/${fb.id}/vote`, { method: 'POST' })
+    }
+    await refreshFeedbacks()
+  } catch {
+    toast.error('투표 처리에 실패했습니다')
+  } finally {
+    votingId.value = null
+  }
+}
+
+async function toggleShare() {
+  if (!insight.value) return
+  togglingShare.value = true
+  const nextShared = !insight.value.isShared
+  try {
+    await $fetch(`/api/insights/${insight.value.id}/share`, {
+      method: 'PATCH',
+      body: { isShared: nextShared }
+    })
+    await refreshInsight()
+    toast.success(nextShared ? '인사이트를 공유했습니다' : '인사이트를 비공개로 변경했습니다')
+  } catch {
+    toast.error('공유 설정 변경에 실패했습니다')
+  } finally {
+    togglingShare.value = false
+  }
+}
 
 async function generateInsight() {
   generatingInsight.value = true
