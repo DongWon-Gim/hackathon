@@ -1,9 +1,8 @@
 import type { AuthUser } from '~/types'
 
-const user = ref<AuthUser | null>(null)
-const initialized = ref(false)
-
 export function useAuth() {
+  const user = useState<AuthUser | null>('auth:user', () => null)
+  const initialized = useState<boolean>('auth:initialized', () => false)
   const router = useRouter()
 
   async function fetchMe() {
