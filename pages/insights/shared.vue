@@ -23,7 +23,7 @@
       >
         <div class="flex items-start justify-between">
           <div>
-            <p class="text-xs text-ink-muted font-mono mb-1">{{ insight.teamName }} · {{ insight.sessionTitle }}</p>
+            <p class="text-xs text-ink-muted font-mono mb-1">{{ insight.session.title }} · {{ insight.session.projectName }}</p>
             <p class="text-sm text-ink leading-relaxed">{{ insight.summary }}</p>
           </div>
           <span class="text-ink-muted text-xs ml-4 flex-shrink-0 mt-0.5">
@@ -52,9 +52,16 @@ interface SharedInsight {
   id: string
   summary: string
   issues: { title: string; description: string; action: string }[]
-  teamName: string
-  sessionTitle: string
+  isShared: boolean
+  sessionId: string
   createdAt: string
+  session: {
+    id: string
+    title: string
+    projectName: string
+    periodStart: string | null
+    periodEnd: string | null
+  }
 }
 
 const { data: insights, pending } = await useFetch<SharedInsight[]>('/api/insights/shared')
