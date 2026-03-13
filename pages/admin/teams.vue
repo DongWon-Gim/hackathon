@@ -88,7 +88,7 @@ async function createTeam() {
 async function deleteTeam(id: string) {
   if (!confirm('팀을 삭제하시겠습니까?')) return
   try {
-    await $fetch(`/api/teams/${id}`, { method: 'POST' })
+    await $fetch(`/api/teams/${id}`, { method: 'DELETE' })
     toast.success('팀이 삭제되었습니다')
     await refresh()
   } catch {

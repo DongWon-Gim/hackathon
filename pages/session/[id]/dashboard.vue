@@ -50,7 +50,7 @@
         <div class="flex items-center justify-between mb-4">
           <p class="section-label">AI 인사이트</p>
           <button
-            v-if="isLeader && !insight"
+            v-if="isLeader && !insight && session.status === 'CLOSED'"
             class="btn-primary text-xs"
             :disabled="generatingInsight || !hasFeedbacks"
             @click="generateInsight"
@@ -120,9 +120,8 @@ const hasFeedbacks = computed(() => (feedbacks.value?.length ?? 0) > 0)
 async function generateInsight() {
   generatingInsight.value = true
   try {
-    await $fetch(`/api/insights/generate`, {
-      method: 'POST',
-      body: { sessionId: route.params.id }
+    await $fetch(`/api/sessions/${route.params.id}/insights`, {
+      method: 'POST'
     })
     await refreshInsight()
     toast.success('인사이트가 생성되었습니다')

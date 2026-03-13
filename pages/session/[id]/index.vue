@@ -50,7 +50,7 @@
             v-model="content"
             class="input resize-none h-28"
             :placeholder="placeholder"
-            maxlength="2000"
+            maxlength="500"
           />
           <div class="flex items-center justify-between mt-3">
             <label class="flex items-center gap-2 cursor-pointer select-none">

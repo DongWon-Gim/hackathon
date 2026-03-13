@@ -9,13 +9,12 @@ export default defineEventHandler(async (event) => {
   if (!session) throw ERROR.NOT_FOUND('세션')
   if (session.teamId !== teamId) throw ERROR.TEAM_MISMATCH()
 
-  const insights = await prisma.insight.findMany({
+  const insight = await prisma.insight.findFirst({
     where: { sessionId: id },
     orderBy: { createdAt: 'desc' }
   })
 
-  return insights.map((i) => ({
-    ...i,
-    issues: JSON.parse(i.issues)
-  }))
+  if (!insight) return null
+
+  return { ...insight, issues: JSON.parse(insight.issues) }
 })
