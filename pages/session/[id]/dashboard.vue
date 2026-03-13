@@ -149,6 +149,17 @@ const togglingShare = ref(false)
 const sortBy = ref<'votes' | 'latest'>('latest')
 const votingId = ref<string | null>(null)
 
+// 5초 폴링 — 피드백/투표 실시간 반영
+let pollTimer: ReturnType<typeof setInterval> | null = null
+onMounted(() => {
+  pollTimer = setInterval(() => {
+    if (!votingId.value) refreshFeedbacks()
+  }, 5000)
+})
+onUnmounted(() => {
+  if (pollTimer) clearInterval(pollTimer)
+})
+
 const categories = [
   { value: 'KEEP' as const, label: 'Keep', emoji: '✅', textColor: 'text-keep' },
   { value: 'PROBLEM' as const, label: 'Problem', emoji: '🔴', textColor: 'text-problem' },
