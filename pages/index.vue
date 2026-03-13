@@ -30,6 +30,7 @@
         <div>
           <div class="flex items-center gap-2 mb-1">
             <Badge :label="session.status === 'ACTIVE' ? '진행중' : '마감'" :variant="session.status === 'ACTIVE' ? 'active' : 'closed'" />
+            <span v-if="session.hasSharedInsight" class="text-xs text-accent font-medium bg-accent/10 px-1.5 py-0.5 rounded">🤖 인사이트 공유됨</span>
             <span class="text-xs text-ink-muted font-mono">{{ formatDate(session.createdAt) }}</span>
           </div>
           <h2 class="font-semibold text-ink">{{ session.title }}</h2>

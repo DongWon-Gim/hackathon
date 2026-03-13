@@ -39,6 +39,7 @@ export interface Session {
   createdAt: string
   teamId: string
   creatorId: string
+  hasSharedInsight?: boolean
 }
 
 export interface Feedback {
