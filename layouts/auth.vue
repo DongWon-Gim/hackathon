@@ -1,7 +1,7 @@
 <template>
-  <div class="min-h-screen bg-base flex items-center justify-center p-4">
+  <div class="min-h-screen bg-base flex items-center justify-center">
     <!-- Background grid texture -->
-    <div class="fixed inset-0 opacity-[0.03]" style="background-image: linear-gradient(#e2e8f4 1px, transparent 1px), linear-gradient(90deg, #e2e8f4 1px, transparent 1px); background-size: 40px 40px;" />
+    <div class="fixed inset-0 opacity-[0.03]" style="background-image: linear-gradient(#d4ddd0 1px, transparent 1px), linear-gradient(90deg, #d4ddd0 1px, transparent 1px); background-size: 40px 40px;" />
 
     <!-- Accent glow -->
     <div class="fixed top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-accent/5 rounded-full blur-3xl pointer-events-none" />
