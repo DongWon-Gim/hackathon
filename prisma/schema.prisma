@@ -1,0 +1,135 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// ─── 사용자 ───
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String
+  name      String
+  role      Role     @default(MEMBER)
+  isActive  Boolean  @default(true)
+  teamId    String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  team        Team?        @relation(fields: [teamId], references: [id])
+  votes       Vote[]
+  actionItems ActionItem[] @relation("assignee")
+  sessions    Session[]    @relation("creator")
+}
+
+enum Role {
+  ADMIN
+  LEADER
+  MEMBER
+}
+
+// ─── 팀 ───
+model Team {
+  id         String   @id @default(cuid())
+  name       String
+  inviteCode String   @unique @default(cuid())
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  members  User[]
+  sessions Session[]
+}
+
+// ─── 회고 세션 ───
+model Session {
+  id          String        @id @default(cuid())
+  title       String
+  projectName String
+  status      SessionStatus @default(ACTIVE)
+  periodStart DateTime?
+  periodEnd   DateTime?
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  teamId      String
+  creatorId   String
+
+  team      Team       @relation(fields: [teamId], references: [id])
+  creator   User       @relation("creator", fields: [creatorId], references: [id])
+  feedbacks Feedback[]
+  insights  Insight[]
+}
+
+enum SessionStatus {
+  ACTIVE
+  CLOSED
+}
+
+// ─── 피드백 (익명 - userId 절대 저장하지 않음!) ───
+model Feedback {
+  id        String           @id @default(cuid())
+  content   String
+  category  FeedbackCategory
+  sessionId String
+  createdAt DateTime         @default(now())
+
+  session     Session      @relation(fields: [sessionId], references: [id])
+  votes       Vote[]
+  actionItems ActionItem[]
+}
+
+enum FeedbackCategory {
+  KEEP
+  PROBLEM
+  TRY
+}
+
+// ─── 투표 (실명) ───
+model Vote {
+  id         String   @id @default(cuid())
+  userId     String
+  feedbackId String
+  createdAt  DateTime @default(now())
+
+  user     User     @relation(fields: [userId], references: [id])
+  feedback Feedback @relation(fields: [feedbackId], references: [id])
+
+  @@unique([userId, feedbackId])
+}
+
+// ─── AI 인사이트 ───
+model Insight {
+  id        String   @id @default(cuid())
+  summary   String
+  issues    String   // JSON: [{title, description, action}]
+  isShared  Boolean  @default(false)
+  sessionId String
+  createdAt DateTime @default(now())
+
+  session     Session      @relation(fields: [sessionId], references: [id])
+  actionItems ActionItem[]
+}
+
+// ─── 액션 아이템 ───
+model ActionItem {
+  id         String           @id @default(cuid())
+  content    String
+  status     ActionItemStatus @default(PENDING)
+  dueDate    DateTime?
+  assigneeId String?
+  feedbackId String?
+  insightId  String?
+  createdAt  DateTime         @default(now())
+  updatedAt  DateTime         @updatedAt
+
+  assignee User?     @relation("assignee", fields: [assigneeId], references: [id])
+  feedback Feedback? @relation(fields: [feedbackId], references: [id])
+  insight  Insight?  @relation(fields: [insightId], references: [id])
+}
+
+enum ActionItemStatus {
+  PENDING
+  COMPLETED
+}

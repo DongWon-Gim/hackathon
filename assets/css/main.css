@@ -1,0 +1,130 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    background-color: #08091a;
+    color: #e2e8f4;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: #1f2d47 transparent;
+  }
+
+  ::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background-color: #1f2d47;
+    border-radius: 3px;
+  }
+}
+
+@layer components {
+  /* Buttons */
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg font-medium text-sm transition-all duration-150 disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+
+  .btn-primary {
+    @apply btn bg-accent text-base hover:bg-accent-hover active:scale-95;
+  }
+
+  .btn-secondary {
+    @apply btn bg-elevated text-ink border border-border hover:border-accent/40 hover:text-accent active:scale-95;
+  }
+
+  .btn-danger {
+    @apply btn bg-danger/10 text-danger border border-danger/30 hover:bg-danger/20 active:scale-95;
+  }
+
+  .btn-ghost {
+    @apply btn text-ink-muted hover:text-ink hover:bg-elevated active:scale-95;
+  }
+
+  /* Inputs */
+  .input {
+    @apply w-full px-3 py-2.5 rounded-lg bg-elevated border border-border text-ink text-sm
+           placeholder:text-ink-subtle
+           focus:outline-none focus:border-accent/60 focus:ring-1 focus:ring-accent/20
+           transition-colors duration-150;
+  }
+
+  .input-label {
+    @apply block text-xs font-medium text-ink-muted mb-1.5 uppercase tracking-wide;
+  }
+
+  /* Cards */
+  .card {
+    @apply bg-surface border border-border rounded-xl p-4 shadow-card;
+  }
+
+  .card-hover {
+    @apply card transition-all duration-150 hover:border-accent/30 hover:shadow-glow cursor-pointer;
+  }
+
+  /* Badges */
+  .badge {
+    @apply inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium font-mono;
+  }
+
+  .badge-active {
+    @apply badge bg-success/15 text-success border border-success/25;
+  }
+
+  .badge-closed {
+    @apply badge bg-ink-subtle/30 text-ink-muted border border-border;
+  }
+
+  .badge-keep {
+    @apply badge bg-keep/15 text-keep border border-keep/25;
+  }
+
+  .badge-problem {
+    @apply badge bg-problem/15 text-problem border border-problem/25;
+  }
+
+  .badge-try {
+    @apply badge bg-try/15 text-try border border-try/25;
+  }
+
+  .badge-admin {
+    @apply badge bg-accent-dim text-accent border border-accent/25;
+  }
+
+  .badge-leader {
+    @apply badge bg-try/15 text-try border border-try/25;
+  }
+
+  .badge-member {
+    @apply badge bg-ink-subtle/30 text-ink-muted border border-border;
+  }
+
+  /* Dividers */
+  .divider {
+    @apply border-t border-border;
+  }
+
+  /* Page layout */
+  .page-container {
+    @apply max-w-6xl mx-auto px-4 sm:px-6 py-8;
+  }
+
+  .page-title {
+    @apply font-display text-2xl font-bold text-ink;
+  }
+
+  /* Section headers */
+  .section-label {
+    @apply text-xs font-medium text-ink-muted uppercase tracking-widest font-mono;
+  }
+}
