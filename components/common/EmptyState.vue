@@ -5,7 +5,7 @@
     </div>
     <p class="text-ink-muted text-sm mb-1">{{ message }}</p>
     <p v-if="subMessage" class="text-ink-subtle text-xs">{{ subMessage }}</p>
-    <NuxtLink v-if="actionTo" :to="actionTo" class="btn-primary mt-4 text-xs">
+    <NuxtLink v-if="actionTo && actionText" :to="actionTo" class="btn-primary mt-4 text-xs">
       {{ actionText }}
     </NuxtLink>
     <button v-else-if="actionText" class="btn-secondary mt-4 text-xs" @click="$emit('action')">

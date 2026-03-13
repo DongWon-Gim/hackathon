@@ -1,14 +1,9 @@
 <template>
   <div class="page-container">
     <!-- Header -->
-    <div class="flex items-center justify-between mb-8">
-      <div>
-        <p class="section-label mb-1">{{ user?.name }}의 팀</p>
-        <h1 class="page-title">회고 세션</h1>
-      </div>
-      <NuxtLink v-if="isLeader" to="/new" class="btn-primary">
-        + 세션 생성
-      </NuxtLink>
+    <div class="mb-8">
+      <p class="section-label mb-1">{{ user?.name }}의 팀</p>
+      <h1 class="page-title">회고 세션</h1>
     </div>
 
     <!-- Loading -->

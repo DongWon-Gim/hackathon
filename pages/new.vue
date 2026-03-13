@@ -1,10 +1,7 @@
 <template>
   <div class="page-container max-w-xl">
     <div class="mb-6">
-      <NuxtLink to="/" class="text-xs text-ink-muted hover:text-ink flex items-center gap-1 mb-4">
-        ← 홈으로
-      </NuxtLink>
-      <h1 class="page-title">새 회고 세션</h1>
+<h1 class="page-title">새 회고 세션</h1>
     </div>
 
     <div class="card p-6">
