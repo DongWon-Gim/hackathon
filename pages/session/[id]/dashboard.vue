@@ -1,5 +1,5 @@
 <template>
-  <div class="page-container">
+  <div class="px-6 py-8">
     <LoadingSpinner v-if="pending" full-page />
     <template v-else-if="session">
       <!-- Header -->
@@ -7,14 +7,14 @@
         <div>
           <div class="flex items-center gap-2 mb-2">
             <Badge :label="session.status === 'ACTIVE' ? '진행중' : '마감'" :variant="session.status === 'ACTIVE' ? 'active' : 'closed'" />
-            <NuxtLink v-if="session.status === 'ACTIVE'" :to="`/session/${session.id}`" class="text-xs text-ink-muted hover:text-accent">
-              피드백 입력 →
-            </NuxtLink>
           </div>
           <h1 class="page-title">{{ session.title }}</h1>
           <p class="text-sm text-ink-muted">{{ session.projectName }}</p>
         </div>
-        <NuxtLink to="/" class="btn-ghost text-xs">← 홈</NuxtLink>
+        <div v-if="isLeader && stats" class="text-right">
+          <p class="text-2xl font-display font-bold text-accent">{{ stats.participants ?? 0 }}</p>
+          <p class="text-xs text-ink-muted">참여자 수</p>
+        </div>
       </div>
 
       <!-- Feedback columns -->
@@ -97,6 +97,7 @@ const { isLeader } = useAuth()
 const toast = useToast()
 
 const { data: session, pending } = await useFetch<Session>(`/api/sessions/${route.params.id}`)
+const { data: stats } = await useFetch<Record<string, number>>(`/api/sessions/${route.params.id}/stats`)
 const { data: feedbacks, refresh: refreshFeedbacks } = await useFetch<Feedback[]>(`/api/sessions/${route.params.id}/feedbacks`)
 const { data: insight, refresh: refreshInsight } = await useFetch<Insight | null>(`/api/sessions/${route.params.id}/insights`)
 

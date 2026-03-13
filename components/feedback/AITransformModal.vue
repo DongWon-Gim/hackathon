@@ -56,6 +56,7 @@ const props = defineProps<{
   original: string
   sessionId: string
   category: string
+  userSessionId?: string | null
 }>()
 
 const emit = defineEmits(['close', 'submitted'])
@@ -70,7 +71,7 @@ async function transform() {
   error.value = ''
   transformed.value = ''
   try {
-    const data = await $fetch<{ transformed: string }>('/api/feedbacks/transform', {
+    const data = await $fetch<{ transformed: string }>('/api/ai/transform', {
       method: 'POST',
       body: { content: props.original }
     })
@@ -85,9 +86,9 @@ async function transform() {
 async function submit() {
   const content = error.value ? props.original : transformed.value
   try {
-    await $fetch('/api/feedbacks', {
+    await $fetch(`/api/sessions/${props.sessionId}/feedbacks`, {
       method: 'POST',
-      body: { sessionId: props.sessionId, category: props.category, content }
+      body: { category: props.category, content, userSessionId: props.userSessionId }
     })
     toast.success('피드백이 제출되었습니다')
     emit('submitted')

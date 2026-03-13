@@ -1,5 +1,5 @@
 <template>
-  <div class="page-container max-w-2xl">
+  <div class="px-6 py-8 max-w-2xl">
     <LoadingSpinner v-if="pending" full-page />
     <template v-else-if="session">
       <!-- Header -->
@@ -7,9 +7,6 @@
         <div>
           <div class="flex items-center gap-2 mb-2">
             <Badge :label="session.status === 'ACTIVE' ? '진행중' : '마감'" :variant="session.status === 'ACTIVE' ? 'active' : 'closed'" />
-            <NuxtLink :to="`/session/${session.id}/dashboard`" class="text-xs text-ink-muted hover:text-accent">
-              대시보드 →
-            </NuxtLink>
           </div>
           <h1 class="page-title">{{ session.title }}</h1>
           <p class="text-sm text-ink-muted">{{ session.projectName }}</p>
@@ -82,16 +79,6 @@
         </p>
       </template>
 
-      <!-- Stats -->
-      <div v-if="stats" class="mt-6 p-4 bg-elevated rounded-xl border border-border">
-        <p class="section-label mb-3">참여 현황</p>
-        <div class="flex gap-6">
-          <div v-for="cat in categories" :key="cat.value" class="text-center">
-            <p class="text-lg font-display font-bold" :class="cat.textColor">{{ stats[cat.value] ?? 0 }}</p>
-            <p class="text-xs text-ink-muted">{{ cat.label }}</p>
-          </div>
-        </div>
-      </div>
     </template>
 
     <!-- AI Transform Modal -->
@@ -100,6 +87,7 @@
       :original="content"
       :session-id="route.params.id as string"
       :category="activeCategory"
+      :user-session-id="anonId"
       @close="showTransformModal = false"
       @submitted="onSubmitted"
     />
@@ -125,7 +113,16 @@ const { isLeader } = useAuth()
 const toast = useToast()
 
 const { data: session, pending, refresh } = await useFetch<Session>(`/api/sessions/${route.params.id}`)
-const { data: stats, refresh: refreshStats } = await useFetch<Record<string, number>>(`/api/sessions/${route.params.id}/stats`)
+const { data: stats, refresh: refreshStats } = await useFetch<Record<string, number>>(`/api/sessions/${route.params.id}/stats`, { lazy: true })
+
+// 브라우저 익명 식별자 — 로그인과 무관, 참여자 수 집계용
+const anonId = useCookie('_rl_anon', {
+  maxAge: 60 * 60 * 24 * 365,
+  sameSite: 'lax'
+})
+if (!anonId.value) {
+  anonId.value = crypto.randomUUID()
+}
 
 const activeCategory = ref<'KEEP' | 'PROBLEM' | 'TRY'>('KEEP')
 const content = ref('')
@@ -160,9 +157,9 @@ async function handleSubmit() {
 async function submitFeedback(text: string) {
   submitting.value = true
   try {
-    await $fetch('/api/feedbacks', {
+    await $fetch(`/api/sessions/${route.params.id}/feedbacks`, {
       method: 'POST',
-      body: { sessionId: route.params.id, category: activeCategory.value, content: text }
+      body: { category: activeCategory.value, content: text, userSessionId: anonId.value }
     })
     content.value = ''
     toast.success('피드백이 제출되었습니다')
@@ -183,7 +180,7 @@ function onSubmitted() {
 async function closeSession() {
   showCloseDialog.value = false
   try {
-    await $fetch(`/api/sessions/${route.params.id}/close`, { method: 'POST' })
+    await $fetch(`/api/sessions/${route.params.id}/close`, { method: 'PATCH' })
     toast.success('세션이 마감되었습니다')
     await refresh()
   } catch {
