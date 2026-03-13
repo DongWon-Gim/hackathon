@@ -16,29 +16,29 @@ export default {
         mono: ['"JetBrains Mono"', 'monospace']
       },
       colors: {
-        base: '#08091a',
-        surface: '#0e1326',
-        elevated: '#141929',
-        border: '#1f2d47',
+        base: '#f8faf7',
+        surface: '#ffffff',
+        elevated: '#f0f4ee',
+        border: '#d4ddd0',
         accent: {
-          DEFAULT: '#f5a623',
-          dim: 'rgba(245,166,35,0.15)',
-          hover: '#fbbf24'
+          DEFAULT: '#16a34a',
+          dim: 'rgba(22,163,74,0.10)',
+          hover: '#15803d'
         },
         ink: {
-          DEFAULT: '#e2e8f4',
-          muted: '#6b7fa3',
-          subtle: '#2a3a5c'
+          DEFAULT: '#1a2e1a',
+          muted: '#5c7a5c',
+          subtle: '#b8ccb8'
         },
-        keep: '#10b981',
-        problem: '#f97316',
-        try: '#818cf8',
-        danger: '#ef4444',
-        success: '#10b981'
+        keep: '#16a34a',
+        problem: '#ea580c',
+        try: '#7c3aed',
+        danger: '#dc2626',
+        success: '#16a34a'
       },
       boxShadow: {
-        glow: '0 0 20px rgba(245,166,35,0.15)',
-        card: '0 1px 3px rgba(0,0,0,0.4), 0 0 0 1px rgba(31,45,71,0.8)'
+        glow: '0 0 20px rgba(22,163,74,0.12)',
+        card: '0 1px 3px rgba(0,0,0,0.06), 0 0 0 1px rgba(212,221,208,0.8)'
       }
     }
   },

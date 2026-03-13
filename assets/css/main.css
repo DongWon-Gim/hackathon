@@ -4,15 +4,15 @@
 
 @layer base {
   html {
-    background-color: #08091a;
-    color: #e2e8f4;
+    background-color: #f8faf7;
+    color: #1a2e1a;
     font-family: 'Plus Jakarta Sans', sans-serif;
     -webkit-font-smoothing: antialiased;
   }
 
   * {
     scrollbar-width: thin;
-    scrollbar-color: #1f2d47 transparent;
+    scrollbar-color: #d4ddd0 transparent;
   }
 
   ::-webkit-scrollbar {
@@ -24,7 +24,7 @@
   }
 
   ::-webkit-scrollbar-thumb {
-    background-color: #1f2d47;
+    background-color: #d4ddd0;
     border-radius: 3px;
   }
 }
@@ -116,7 +116,7 @@
 
   /* Page layout */
   .page-container {
-    @apply max-w-6xl mx-auto px-4 sm:px-6 py-8;
+    @apply max-w-5xl px-6 py-8;
   }
 
   .page-title {
