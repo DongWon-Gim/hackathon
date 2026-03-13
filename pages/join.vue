@@ -35,7 +35,12 @@
 <script setup lang="ts">
 definePageMeta({ layout: 'auth' })
 
-const { joinTeam, logout } = useAuth()
+const router = useRouter()
+const { joinTeam, logout, hasTeam } = useAuth()
+
+if (hasTeam.value) {
+  await router.replace('/')
+}
 const inviteCode = ref('')
 const loading = ref(false)
 const errorMsg = ref('')
