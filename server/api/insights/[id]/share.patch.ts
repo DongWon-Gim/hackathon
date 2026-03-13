@@ -7,6 +7,7 @@ export default defineEventHandler(async (event) => {
 
   const insightId = getRouterParam(event, 'id')!
   const { isShared } = await readBody<{ isShared: boolean }>(event)
+  if (typeof isShared !== 'boolean') throw ERROR.VALIDATION_ERROR('isShared는 boolean이어야 합니다')
 
   const insight = await prisma.insight.findUnique({
     where: { id: insightId },

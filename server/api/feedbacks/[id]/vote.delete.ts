@@ -11,6 +11,7 @@ export default defineEventHandler(async (event) => {
   })
   if (!feedback) throw ERROR.NOT_FOUND('피드백')
   if (feedback.session.teamId !== teamId) throw ERROR.TEAM_MISMATCH()
+  if (feedback.session.status === 'CLOSED') throw ERROR.SESSION_CLOSED()
 
   const existing = await prisma.vote.findUnique({
     where: { userId_feedbackId: { userId, feedbackId } }

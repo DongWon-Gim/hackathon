@@ -1,23 +1,40 @@
 import prisma from '~/server/utils/prisma'
 
 export default defineEventHandler(async (event) => {
-  const { teamId } = event.context.auth
-
   const insights = await prisma.insight.findMany({
-    where: { isShared: true, session: { teamId } },
+    where: { isShared: true },
     orderBy: { createdAt: 'desc' },
     include: {
-      session: { select: { id: true, title: true, projectName: true, periodStart: true, periodEnd: true } }
+      session: {
+        select: {
+          id: true, title: true, projectName: true, periodStart: true, periodEnd: true,
+          team: { select: { name: true } }
+        }
+      }
     }
   })
 
-  return insights.map((i) => ({
-    id: i.id,
-    summary: i.summary,
-    issues: JSON.parse(i.issues),
-    isShared: i.isShared,
-    sessionId: i.sessionId,
-    createdAt: i.createdAt,
-    session: i.session
-  }))
+  return insights.map((i) => {
+    let issues: unknown[]
+    try {
+      issues = JSON.parse(i.issues)
+    } catch {
+      issues = []
+    }
+    return {
+      id: i.id,
+      summary: i.summary,
+      issues,
+      sessionId: i.sessionId,
+      createdAt: i.createdAt,
+      session: {
+        id: i.session.id,
+        title: i.session.title,
+        projectName: i.session.projectName,
+        teamName: i.session.team.name,
+        periodStart: i.session.periodStart,
+        periodEnd: i.session.periodEnd
+      }
+    }
+  })
 })

@@ -63,7 +63,7 @@
                 <button
                   class="flex items-center gap-1.5 text-xs transition-colors px-2 py-1 rounded-md"
                   :class="fb.hasVoted ? 'text-accent bg-accent/10' : 'text-ink-muted hover:text-ink hover:bg-elevated'"
-                  :disabled="votingId === fb.id"
+                  :disabled="votingInProgress.has(fb.id)"
                   @click="toggleVote(fb)"
                 >
                   <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -147,13 +147,13 @@ const { data: insight, refresh: refreshInsight } = await useFetch<Insight | null
 const generatingInsight = ref(false)
 const togglingShare = ref(false)
 const sortBy = ref<'votes' | 'latest'>('latest')
-const votingId = ref<string | null>(null)
+const votingInProgress = ref(new Set<string>())
 
-// 5초 폴링 — 피드백/투표 실시간 반영
+// 5초 폴링 — ACTIVE 세션만, 투표 진행 중 항목 없을 때만 갱신
 let pollTimer: ReturnType<typeof setInterval> | null = null
 onMounted(() => {
   pollTimer = setInterval(() => {
-    if (!votingId.value) refreshFeedbacks()
+    if (session.value?.status === 'ACTIVE' && votingInProgress.value.size === 0) refreshFeedbacks()
   }, 5000)
 })
 onUnmounted(() => {
@@ -187,7 +187,7 @@ const sortedFeedbacksByCategory = computed(() => {
 const hasFeedbacks = computed(() => (feedbacks.value?.length ?? 0) > 0)
 
 async function toggleVote(fb: Feedback) {
-  votingId.value = fb.id
+  votingInProgress.value = new Set(votingInProgress.value).add(fb.id)
   try {
     if (fb.hasVoted) {
       await $fetch(`/api/feedbacks/${fb.id}/vote`, { method: 'DELETE' })
@@ -198,7 +198,9 @@ async function toggleVote(fb: Feedback) {
   } catch {
     toast.error('투표 처리에 실패했습니다')
   } finally {
-    votingId.value = null
+    const next = new Set(votingInProgress.value)
+    next.delete(fb.id)
+    votingInProgress.value = next
   }
 }
 
