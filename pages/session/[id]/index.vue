@@ -115,6 +115,17 @@ const toast = useToast()
 const { data: session, pending, refresh } = await useFetch<Session>(`/api/sessions/${route.params.id}`)
 const { data: stats, refresh: refreshStats } = await useFetch<Record<string, number>>(`/api/sessions/${route.params.id}/stats`, { lazy: true })
 
+// 5초 폴링 — 피드백 카운트 실시간 반영
+let pollTimer: ReturnType<typeof setInterval> | null = null
+onMounted(() => {
+  pollTimer = setInterval(() => {
+    if (session.value?.status === 'ACTIVE') refreshStats()
+  }, 5000)
+})
+onUnmounted(() => {
+  if (pollTimer) clearInterval(pollTimer)
+})
+
 // 브라우저 익명 식별자 — 로그인과 무관, 참여자 수 집계용
 const anonId = useCookie('_rl_anon', {
   maxAge: 60 * 60 * 24 * 365,
