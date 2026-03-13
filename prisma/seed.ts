@@ -1,4 +1,4 @@
-import { PrismaClient, Role } from '@prisma/client'
+import { PrismaClient } from '@prisma/client'
 import bcrypt from 'bcrypt'
 
 const prisma = new PrismaClient()
@@ -15,7 +15,7 @@ async function main() {
       email: 'admin@retrolens.app',
       password: adminPassword,
       name: '관리자',
-      role: Role.ADMIN
+      role: 'ADMIN'
     }
   })
 
@@ -38,7 +38,7 @@ async function main() {
       email: 'leader@retrolens.app',
       password: leaderPassword,
       name: '팀장',
-      role: Role.LEADER,
+      role: 'LEADER',
       teamId: team.id
     }
   })

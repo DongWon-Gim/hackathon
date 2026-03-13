@@ -4,7 +4,7 @@ export function useApi() {
 
   async function request<T>(url: string, options?: Parameters<typeof $fetch>[1]): Promise<T> {
     try {
-      return await $fetch<T>(url, options)
+      return await $fetch<T>(url, options) as T
     } catch (error: unknown) {
       const err = error as { data?: { data?: { code?: string; message?: string } } }
       const code = err?.data?.data?.code || 'INTERNAL_ERROR'

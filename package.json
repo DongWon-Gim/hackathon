@@ -24,6 +24,9 @@
     "vue": "^3.5.0",
     "vue-router": "^4.4.0"
   },
+  "prisma": {
+    "seed": "tsx prisma/seed.ts"
+  },
   "devDependencies": {
     "@nuxtjs/tailwindcss": "^6.12.0",
     "@types/bcrypt": "^5.0.2",

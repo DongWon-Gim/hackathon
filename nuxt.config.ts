@@ -2,6 +2,9 @@ export default defineNuxtConfig({
   devtools: { enabled: true },
   modules: ['@nuxtjs/tailwindcss'],
   css: ['~/assets/css/main.css'],
+  components: [
+    { path: '~/components', pathPrefix: false }
+  ],
 
   runtimeConfig: {
     jwtSecret: process.env.JWT_SECRET,

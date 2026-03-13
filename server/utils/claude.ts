@@ -11,7 +11,7 @@ function getClient(): Anthropic {
   return _client
 }
 
-const MODEL = 'claude-haiku-4-5-20251001'
+const MODEL = 'claude-haiku-4-5'
 
 export async function transformStyle(content: string): Promise<string> {
   const client = getClient()
