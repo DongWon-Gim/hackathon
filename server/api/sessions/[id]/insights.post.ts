@@ -25,7 +25,34 @@ export default defineEventHandler(async (event) => {
   try {
     result = await generateInsight(feedbacks)
   } catch {
-    throw ERROR.AI_SERVICE_ERROR()
+    // AI 실패 시 피드백 내용 기반 임시 인사이트 생성
+    const keeps = feedbacks.filter(f => f.category === 'KEEP')
+    const problems = feedbacks.filter(f => f.category === 'PROBLEM')
+    const tries = feedbacks.filter(f => f.category === 'TRY')
+
+    result = {
+      summary: `총 ${feedbacks.length}개의 피드백이 수집되었습니다. Keep ${keeps.length}개, Problem ${problems.length}개, Try ${tries.length}개입니다. (AI 서비스 일시 오류로 자동 생성된 임시 인사이트입니다)`,
+      issues: [
+        ...problems.slice(0, 3).map(f => ({
+          title: '개선 필요',
+          description: f.content,
+          action: '팀 논의를 통해 구체적인 개선 방안을 수립하세요'
+        })),
+        ...tries.slice(0, 2).map(f => ({
+          title: '시도 제안',
+          description: f.content,
+          action: '다음 스프린트에 적용을 검토하세요'
+        }))
+      ].slice(0, 5)
+    }
+
+    if (result.issues.length === 0) {
+      result.issues = [{
+        title: '피드백 검토 필요',
+        description: `${feedbacks.length}개의 피드백이 제출되었습니다`,
+        action: '팀원들과 함께 피드백을 검토하고 개선점을 도출하세요'
+      }]
+    }
   }
 
   const insight = await prisma.insight.create({
