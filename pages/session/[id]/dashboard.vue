@@ -130,6 +130,52 @@
       </div>
     </template>
   </div>
+
+  <!-- AI 실패 시 임시 인사이트 선택 모달 -->
+  <Teleport to="body">
+    <Transition name="modal">
+      <div v-if="showFallbackModal" class="fixed inset-0 z-[200] flex items-center justify-center p-4">
+        <div class="absolute inset-0 bg-base/80 backdrop-blur-sm" />
+        <div class="relative z-10 card max-w-md w-full p-6">
+          <div class="flex items-center gap-3 mb-4">
+            <span class="text-2xl">⚠️</span>
+            <div>
+              <h3 class="font-display font-bold text-ink">AI 서비스 오류</h3>
+              <p class="text-xs text-ink-muted mt-0.5">인사이트 생성 중 오류가 발생했습니다</p>
+            </div>
+          </div>
+
+          <p class="text-sm text-ink-muted mb-5">
+            피드백 내용을 기반으로 임시 인사이트를 생성할 수 있습니다.<br>
+            나중에 다시 시도하면 AI 인사이트를 받을 수 있습니다.
+          </p>
+
+          <!-- 미리보기 -->
+          <div v-if="fallbackPreview" class="bg-elevated rounded-lg p-3 mb-5 text-xs text-ink-muted border border-border">
+            <p class="font-medium text-ink mb-1">임시 인사이트 미리보기</p>
+            <p class="leading-relaxed">{{ fallbackPreview.summary }}</p>
+          </div>
+
+          <div class="flex gap-3">
+            <button
+              class="btn-ghost flex-1 text-sm"
+              @click="showFallbackModal = false"
+            >
+              다시 시도
+            </button>
+            <button
+              class="btn-primary flex-1 text-sm"
+              :disabled="savingFallback"
+              @click="saveFallback"
+            >
+              <LoadingSpinner v-if="savingFallback" size="sm" />
+              {{ savingFallback ? '저장 중...' : '임시 데이터 사용' }}
+            </button>
+          </div>
+        </div>
+      </div>
+    </Transition>
+  </Teleport>
 </template>
 
 <script setup lang="ts">
@@ -146,6 +192,9 @@ const { data: insight, refresh: refreshInsight } = await useFetch<Insight | null
 
 const generatingInsight = ref(false)
 const togglingShare = ref(false)
+const showFallbackModal = ref(false)
+const savingFallback = ref(false)
+const fallbackPreview = ref<{ summary: string; issues: { title: string; description: string; action: string }[] } | null>(null)
 const sortBy = ref<'votes' | 'latest'>('latest')
 const votingInProgress = ref(new Set<string>())
 
@@ -225,15 +274,44 @@ async function toggleShare() {
 async function generateInsight() {
   generatingInsight.value = true
   try {
-    await $fetch(`/api/sessions/${route.params.id}/insights`, {
-      method: 'POST'
-    })
-    await refreshInsight()
-    toast.success('인사이트가 생성되었습니다')
+    const res = await $fetch<{ isFallback?: boolean; preview?: typeof fallbackPreview.value } & Record<string, unknown>>(
+      `/api/sessions/${route.params.id}/insights`,
+      { method: 'POST' }
+    )
+    if (res.isFallback && res.preview) {
+      fallbackPreview.value = res.preview
+      showFallbackModal.value = true
+    } else {
+      await refreshInsight()
+      toast.success('인사이트가 생성되었습니다')
+    }
   } catch {
     toast.error('인사이트 생성에 실패했습니다')
   } finally {
     generatingInsight.value = false
   }
 }
+
+async function saveFallback() {
+  savingFallback.value = true
+  try {
+    await $fetch(`/api/sessions/${route.params.id}/insights`, {
+      method: 'POST',
+      body: { useFallback: true }
+    })
+    await refreshInsight()
+    showFallbackModal.value = false
+    toast.success('임시 인사이트가 저장되었습니다')
+  } catch {
+    toast.error('저장에 실패했습니다')
+  } finally {
+    savingFallback.value = false
+  }
+}
 </script>
+
+
+<style scoped>
+.modal-enter-active, .modal-leave-active { transition: opacity 0.15s ease; }
+.modal-enter-from, .modal-leave-to { opacity: 0; }
+</style>

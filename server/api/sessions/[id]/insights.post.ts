@@ -21,50 +21,54 @@ export default defineEventHandler(async (event) => {
     throw ERROR.VALIDATION_ERROR('피드백이 없어 인사이트를 생성할 수 없습니다')
   }
 
-  let result: { summary: string; issues: { title: string; description: string; action: string }[] }
-  try {
-    result = await generateInsight(feedbacks)
-  } catch {
-    // AI 실패 시 피드백 내용 기반 임시 인사이트 생성
-    const keeps = feedbacks.filter(f => f.category === 'KEEP')
-    const problems = feedbacks.filter(f => f.category === 'PROBLEM')
-    const tries = feedbacks.filter(f => f.category === 'TRY')
+  const body = await readBody<{ useFallback?: boolean }>(event).catch(() => ({}))
 
-    result = {
-      summary: `총 ${feedbacks.length}개의 피드백이 수집되었습니다. Keep ${keeps.length}개, Problem ${problems.length}개, Try ${tries.length}개입니다. (AI 서비스 일시 오류로 자동 생성된 임시 인사이트입니다)`,
-      issues: [
-        ...problems.slice(0, 3).map(f => ({
-          title: '개선 필요',
-          description: f.content,
-          action: '팀 논의를 통해 구체적인 개선 방안을 수립하세요'
-        })),
-        ...tries.slice(0, 2).map(f => ({
-          title: '시도 제안',
-          description: f.content,
-          action: '다음 스프린트에 적용을 검토하세요'
-        }))
-      ].slice(0, 5)
-    }
-
-    if (result.issues.length === 0) {
-      result.issues = [{
-        title: '피드백 검토 필요',
-        description: `${feedbacks.length}개의 피드백이 제출되었습니다`,
-        action: '팀원들과 함께 피드백을 검토하고 개선점을 도출하세요'
-      }]
-    }
+  // useFallback=true: 임시 인사이트 저장 요청
+  if (body.useFallback) {
+    const result = buildFallback(feedbacks)
+    const insight = await prisma.insight.create({
+      data: { summary: result.summary, issues: JSON.stringify(result.issues), sessionId: id }
+    })
+    return { ...insight, issues: result.issues, isFallback: false }
   }
 
-  const insight = await prisma.insight.create({
-    data: {
-      summary: result.summary,
-      issues: JSON.stringify(result.issues),
-      sessionId: id
-    }
-  })
-
-  return {
-    ...insight,
-    issues: result.issues
+  // AI 호출
+  try {
+    const result = await generateInsight(feedbacks)
+    const insight = await prisma.insight.create({
+      data: { summary: result.summary, issues: JSON.stringify(result.issues), sessionId: id }
+    })
+    return { ...insight, issues: result.issues, isFallback: false }
+  } catch {
+    // AI 실패 → 저장 없이 임시 프리뷰 반환
+    return { isFallback: true, preview: buildFallback(feedbacks) }
   }
 })
+
+function buildFallback(feedbacks: { category: string; content: string }[]) {
+  const keeps = feedbacks.filter(f => f.category === 'KEEP')
+  const problems = feedbacks.filter(f => f.category === 'PROBLEM')
+  const tries = feedbacks.filter(f => f.category === 'TRY')
+
+  const issues = [
+    ...problems.slice(0, 3).map(f => ({
+      title: '개선 필요',
+      description: f.content,
+      action: '팀 논의를 통해 구체적인 개선 방안을 수립하세요'
+    })),
+    ...tries.slice(0, 2).map(f => ({
+      title: '시도 제안',
+      description: f.content,
+      action: '다음 스프린트에 적용을 검토하세요'
+    }))
+  ].slice(0, 5)
+
+  return {
+    summary: `총 ${feedbacks.length}개의 피드백이 수집되었습니다. Keep ${keeps.length}개, Problem ${problems.length}개, Try ${tries.length}개입니다.`,
+    issues: issues.length > 0 ? issues : [{
+      title: '피드백 검토 필요',
+      description: `${feedbacks.length}개의 피드백이 제출되었습니다`,
+      action: '팀원들과 함께 피드백을 검토하고 개선점을 도출하세요'
+    }]
+  }
+}
