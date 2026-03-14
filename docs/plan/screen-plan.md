@@ -1,8 +1,9 @@
 # RetroLens 화면 기획서
 
 - **작성일:** 2026-03-13
+- **최종 수정:** 2026-03-15 (디자인 시스템 / 반응형 / 애니메이션 구현 상세 추가)
 - **기반 문서:** PRD v1.2.0, 기획 분석 문서
-- **버전:** 1.0.0
+- **버전:** 1.2.0
 
 ---
 
@@ -923,3 +924,251 @@
 | 토스트 메시지 | 피드백 제출 완료, 설정 변경 완료 등 일시적인 성공/실패 알림 | 전체 |
 | 뱃지 | 세션 상태(진행중/마감), 사용자 역할(ADMIN/LEADER/MEMBER) 등 상태 표시 | SCR-001, SCR-007, SCR-008 |
 | 권한별 요소 노출 제어 | 사용자 역할에 따라 버튼/메뉴 표시 여부 결정 (예: 세션 생성 버튼은 팀장 이상, 관리자 메뉴는 최고관리자만) | 전체 |
+
+---
+
+## 6. 디자인 시스템 (실제 구현 기준)
+
+`tailwind.config.ts` + `assets/css/main.css` 기반 실제 구현 명세.
+
+### 6.1 컬러 팔레트
+
+| 토큰 | 값 | 사용처 |
+|------|-----|--------|
+| `base` | `#f8faf7` | 페이지 배경, html 기본 배경 |
+| `surface` | `#ffffff` | 카드, 모달, 사이드바 배경 |
+| `elevated` | `#f0f4ee` | 버튼 호버, 입력 배경, 선택된 메뉴 |
+| `border` | `#d4ddd0` | 모든 테두리, 구분선 |
+| `accent` | `#16a34a` | 주요 액션 버튼, 포커스 링, 로고 |
+| `accent.hover` | `#15803d` | 버튼 호버 상태 |
+| `accent.dim` | `rgba(22,163,74,0.10)` | ADMIN 뱃지 배경, 강조 배경 |
+| `ink` | `#1a2e1a` | 주요 텍스트 |
+| `ink.muted` | `#5c7a5c` | 보조 텍스트, 아이콘 |
+| `ink.subtle` | `#b8ccb8` | 플레이스홀더, 구분 텍스트 |
+| `keep` | `#16a34a` | Keep 카테고리 (초록) |
+| `problem` | `#ea580c` | Problem 카테고리 (주황) |
+| `try` | `#7c3aed` | Try 카테고리, LEADER 뱃지 (보라) |
+| `danger` | `#dc2626` | 삭제 버튼, 에러 상태 (빨강) |
+| `success` | `#16a34a` | 성공 토스트, ACTIVE 뱃지 |
+
+**K/P/T 색상 전략:** Keep(초록)은 "유지"의 긍정, Problem(주황)은 "주의", Try(보라)는 "시도"의 실험적 뉘앙스. 각 카테고리는 배지, 카드 테두리, 탭 활성 색상에 일관되게 적용.
+
+### 6.2 타이포그래피
+
+| 용도 | 폰트 | 클래스 | 사용처 |
+|------|------|--------|--------|
+| 본문 | Plus Jakarta Sans | `font-sans` | 기본 텍스트 전체 |
+| 제목/로고 | Syne | `font-display` | 페이지 제목, 로고, GNB 앱명 |
+| 코드/뱃지 | JetBrains Mono | `font-mono` | 뱃지 텍스트, 섹션 레이블, 메타 정보 |
+
+- **anti-aliasing:** `-webkit-font-smoothing: antialiased` 전체 적용
+- **page-title:** `font-display text-2xl font-bold text-ink`
+- **section-label:** `text-xs font-medium text-ink-muted uppercase tracking-widest font-mono`
+- **input-label:** `text-xs font-medium text-ink-muted mb-1.5 uppercase tracking-wide`
+
+### 6.3 컴포넌트 클래스 명세
+
+#### 버튼 4종
+
+| 클래스 | 용도 | 시각 |
+|--------|------|------|
+| `.btn-primary` | 주요 액션 (제출, 생성, 로그인) | `bg-accent text-base`, 클릭 시 `scale-95` |
+| `.btn-secondary` | 보조 액션 (취소, 이동) | `bg-elevated border-border`, 호버 시 `border-accent/40` |
+| `.btn-danger` | 파괴적 액션 (삭제, 마감) | `bg-danger/10 text-danger border-danger/30` |
+| `.btn-ghost` | 최소 강조 액션 (로그아웃 등) | 배경 없음, 호버 시 `bg-elevated` |
+
+- 모든 버튼: `disabled:opacity-50 disabled:cursor-not-allowed`, transition `150ms`
+
+#### 입력 필드
+
+```css
+.input {
+  w-full px-3 py-2.5 rounded-lg bg-elevated border-border
+  focus:border-accent/60 focus:ring-1 focus:ring-accent/20  /* 포커스: 초록 링 */
+  transition-colors duration-150
+}
+```
+
+#### 카드 2종
+
+| 클래스 | 용도 | 효과 |
+|--------|------|------|
+| `.card` | 정적 카드 (피드백, 인사이트) | `border-border rounded-xl shadow-card` |
+| `.card-hover` | 클릭 가능 카드 (세션 목록) | 호버 시 `border-accent/30 shadow-glow` (`0 0 20px rgba(22,163,74,0.12)`) |
+
+#### 뱃지 명세
+
+| 클래스 | 색상 | 사용처 |
+|--------|------|--------|
+| `.badge-active` | 초록 solid | ACTIVE 세션 상태 |
+| `.badge-closed` | 회색 solid | CLOSED 세션 상태 |
+| `.badge-insight` | 보라 tint | 인사이트 완료 표시 |
+| `.badge-keep` / `.badge-problem` / `.badge-try` | K/P/T 색상 tint | 카테고리 뱃지 |
+| `.badge-admin` | 초록 tint | ADMIN 역할 |
+| `.badge-leader` | 보라 tint | LEADER 역할 |
+| `.badge-member` | 회색 tint | MEMBER 역할 |
+
+### 6.4 배경 텍스처
+
+`default.vue`에서 전체 배경에 40px 그리드 패턴을 `opacity-[0.02]`로 오버레이. 불투명도가 낮아 시각적으로 두드러지지 않으면서 깊이감 제공.
+
+```css
+background-image: linear-gradient(#d4ddd0 1px, transparent 1px),
+                  linear-gradient(90deg, #d4ddd0 1px, transparent 1px);
+background-size: 40px 40px;
+```
+
+---
+
+## 7. 반응형 레이아웃 설계
+
+Tailwind CSS 기본 브레이크포인트 사용: `md` = 768px.
+
+### 7.1 레이아웃 전환 구조
+
+```
+모바일 (< 768px)                  데스크탑 (≥ 768px)
+─────────────────                 ──────────────────────────────────
+┌──────────────────┐              ┌────────┬─────────────────────────┐
+│ ☰ RetroLens (탑바) │              │        │                         │
+├──────────────────┤              │  사이드  │      메인 콘텐츠          │
+│                  │              │  바     │                         │
+│    메인 콘텐츠    │              │  (256px)│    (flex-1, min-w-0)    │
+│                  │              │  fixed  │                         │
+└──────────────────┘              └────────┴─────────────────────────┘
+  ← 사이드바: 슬라이드 오버레이        ← 사이드바: sticky 고정
+```
+
+### 7.2 GNB 반응형 동작
+
+| 상황 | 모바일 동작 | 데스크탑 동작 |
+|------|------------|--------------|
+| 초기 상태 | 사이드바 숨김 (`-translate-x-full`) | 사이드바 항상 표시 (`translate-x-0`) |
+| 햄버거 클릭 | 사이드바 슬라이드 인 (`translate-x-0`) | 해당 없음 |
+| 오버레이 클릭 | 사이드바 슬라이드 아웃 | 해당 없음 |
+| 메뉴 항목 클릭 | `watch(route.path)` → 자동 닫힘 | 해당 없음 |
+| 상단 탑바 | 표시 (`md:hidden`) | 숨김 |
+| 사이드바 너비 | `w-56` (224px), `z-40`, `fixed` | `w-56` (224px), `sticky` |
+
+**모바일 오버레이:** 사이드바 열림 시 `bg-black/40` 반투명 배경 추가 (`z-30`). 배경 클릭으로 닫기 가능.
+
+**CSS transform 활용:** DOM 추가/제거 없이 `transition-transform duration-200`으로 슬라이드. reflow 없는 GPU 가속 애니메이션.
+
+### 7.3 페이지별 반응형 처리
+
+| 화면 | 모바일 | 데스크탑 |
+|------|--------|----------|
+| SCR-001 홈 | 세션 카드 1컬럼, 전체 너비 | 카드 리스트, max-w-5xl |
+| SCR-003 피드백 입력 | K/P/T 탭 전체 너비, 텍스트영역 전체 너비 | 컨테이너 중앙 정렬 |
+| SCR-004 대시보드 | K/P/T 섹션 수직 스택 (`flex-col`) | 3컬럼 그리드 (`grid-cols-3`) |
+| SCR-005 공유 인사이트 | 카드 1컬럼 | 카드 리스트, max-w-5xl |
+| 모달 전체 | `fixed inset-0` 전체 화면 활용 | `max-w-md` 중앙 모달 |
+
+### 7.4 스크롤바 스타일링
+
+크로스 브라우저 커스텀 스크롤바 (thin, 녹색 계열):
+
+```css
+scrollbar-width: thin;
+scrollbar-color: #d4ddd0 transparent;  /* Firefox */
+::-webkit-scrollbar { width: 6px; }   /* Chrome/Safari */
+::-webkit-scrollbar-thumb { background-color: #d4ddd0; border-radius: 3px; }
+```
+
+---
+
+## 8. 애니메이션 및 트랜지션 명세
+
+### 8.1 토스트 메시지 (Toast.vue)
+
+`TransitionGroup name="toast"` 적용:
+
+| 단계 | 효과 |
+|------|------|
+| 진입 (`enter-from`) | `opacity: 0`, `translateY(8px) scale(0.96)` |
+| 활성 | `transition: all 0.2s ease` |
+| 퇴장 (`leave-to`) | `opacity: 0`, `translateX(16px) scale(0.96)` |
+
+방향: 아래에서 위로 등장, 오른쪽으로 퇴장. 위치: `fixed bottom-6 right-6`.
+
+### 8.2 모달 (대시보드 모달, AI 실패 폴백 모달)
+
+`Transition name="modal"` + `Teleport to="body"`:
+
+| 단계 | 효과 |
+|------|------|
+| 진입 | `opacity: 0`, `scale(0.96)` |
+| 활성 | `transition: all 0.15s ease` |
+| 퇴장 | `opacity: 0`, `scale(0.96)` |
+
+`backdrop-blur-sm` + `bg-base/80` 반투명 배경. 배경 클릭 시 닫힘.
+
+### 8.3 카드 및 버튼 인터랙션
+
+| 요소 | 트랜지션 | 효과 |
+|------|----------|------|
+| `.card-hover` | `transition-all duration-150` | 호버: `border-accent/30 shadow-glow` |
+| `.btn-primary/secondary/danger` | `active:scale-95` | 클릭 시 미세 축소 (클릭 피드백) |
+| 입력 필드 포커스 | `transition-colors duration-150` | `border-accent/60 ring-accent/20` |
+| 사이드바 | `transition-transform duration-200` | 슬라이드 인/아웃 |
+| 메뉴 항목 호버 | `transition-colors` | `bg-elevated/60` 부드러운 전환 |
+
+### 8.4 로딩 스피너 (LoadingSpinner.vue)
+
+```css
+.animate-spin  /* Tailwind 기본 360° 회전, linear infinite */
+border-2 border-border border-t-accent  /* 초록 상단 선 + 회색 테두리 */
+```
+
+크기: `sm(w-4)` / `md(w-6)` / `lg(w-10)`. `label` prop으로 텍스트 병행 표시 가능.
+
+---
+
+## 9. 반응형 검증 결과
+
+### 9.1 검증 환경
+
+| 구분 | 도구 | 뷰포트 |
+|------|------|--------|
+| E2E 기본 | Playwright Chromium | 1280×720 (데스크탑) |
+| 모바일 시뮬레이션 | Playwright `browser_resize` | 390×844 (iPhone 14 Pro) |
+| 태블릿 시뮬레이션 | Playwright `browser_resize` | 768×1024 (iPad) |
+
+### 9.2 핵심 페이지 반응형 검증 결과
+
+| 화면 | 데스크탑 | 모바일 (390px) | 이슈 |
+|------|:--------:|:--------------:|------|
+| SCR-000 로그인 | ✅ | ✅ | 없음 |
+| SCR-000-1 회원가입 | ✅ | ✅ | 없음 |
+| SCR-001 홈 | ✅ | ✅ | 없음 |
+| SCR-003 피드백 입력 | ✅ | ✅ | 없음 |
+| SCR-004 대시보드 (3컬럼) | ✅ | ✅ 수직 스택 | 없음 |
+| SCR-004 모달 | ✅ | ✅ | 없음 |
+| SCR-005 공유 인사이트 | ✅ | ✅ | 없음 |
+| GNB 사이드바 슬라이드 | ✅ | ✅ | 없음 |
+
+### 9.3 반응형 핵심 검증 포인트
+
+**GNB 동작:**
+- 모바일: 탑바 햄버거 버튼 → 사이드바 `translateX(0)` 슬라이드 인
+- 배경 오버레이 (`bg-black/40`) 클릭 → 사이드바 닫힘
+- 메뉴 항목 클릭 → `watch(route.path)` 자동 닫힘 (1회 클릭으로 탐색 + 닫힘)
+
+**대시보드 3컬럼 → 수직 스택:**
+- 데스크탑: `grid grid-cols-3` — Keep/Problem/Try 나란히
+- 모바일: `grid grid-cols-1 md:grid-cols-3` — 수직 스택으로 자동 전환
+
+**텍스트 입력 영역:**
+- 피드백 입력 textarea: `w-full` — 모든 화면 너비에 자동 맞춤
+- 최소 높이 `min-h-[120px]`, 모바일에서도 충분한 입력 공간 확보
+
+**모달:**
+- 데스크탑: `max-w-md` 중앙 모달
+- 모바일: `w-full mx-4` 또는 `max-w-md w-full` — 좌우 여백 유지
+
+### 9.4 미해결 반응형 이슈
+
+| 이슈 | 영향 범위 | 심각도 | 비고 |
+|------|----------|--------|------|
+| 관리자 테이블 (SCR-007, 008) 가로 스크롤 | `/admin/*` | Low | 관리자 화면은 데스크탑 전용으로 허용 범위 |
+| 피드백 카드 3컬럼 좁은 태블릿(600~767px) | SCR-004 | Low | 2컬럼 중간 브레이크포인트 미설정 (`sm:grid-cols-2` 미적용) |
