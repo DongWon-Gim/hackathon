@@ -8,6 +8,9 @@ export default defineEventHandler(async (event) => {
 
   if (role !== 'LEADER' && role !== 'ADMIN') throw ERROR.FORBIDDEN()
 
+  // readBody는 스트림 소비 전에 먼저 호출
+  const body = await readBody<{ useFallback?: boolean }>(event).catch(() => ({}))
+
   const session = await prisma.session.findUnique({ where: { id } })
   if (!session) throw ERROR.NOT_FOUND('세션')
   if (session.teamId !== teamId) throw ERROR.TEAM_MISMATCH()
@@ -20,8 +23,6 @@ export default defineEventHandler(async (event) => {
   if (feedbacks.length === 0) {
     throw ERROR.VALIDATION_ERROR('피드백이 없어 인사이트를 생성할 수 없습니다')
   }
-
-  const body = await readBody<{ useFallback?: boolean }>(event).catch(() => ({}))
 
   // useFallback=true: 임시 인사이트 저장 요청
   if (body.useFallback) {
