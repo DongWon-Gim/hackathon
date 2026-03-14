@@ -63,14 +63,15 @@ definePageMeta({ middleware: 'admin-only' })
 const toast = useToast()
 const search = ref('')
 
-const { data: users, pending, refresh } = await useFetch<{
-  id: string; name: string; email: string; role: string; teamName: string | null; isActive: boolean
-}[]>('/api/admin/users')
+const { data: usersData, pending, refresh } = await useFetch<{
+  users: { id: string; name: string; email: string; role: string; teamName: string | null; isActive: boolean }[]
+}>('/api/admin/users')
 
 const filteredUsers = computed(() => {
-  if (!search.value) return users.value
+  const list = usersData.value?.users ?? []
+  if (!search.value) return list
   const q = search.value.toLowerCase()
-  return users.value?.filter((u) => u.name.toLowerCase().includes(q) || u.email.toLowerCase().includes(q))
+  return list.filter((u) => u.name.toLowerCase().includes(q) || u.email.toLowerCase().includes(q))
 })
 
 async function changeRole(id: string, role: string) {

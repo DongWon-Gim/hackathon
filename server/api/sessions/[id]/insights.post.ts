@@ -59,12 +59,12 @@ function buildFallback(feedbacks: { category: string; content: string }[]) {
 
   const issues = [
     ...problems.slice(0, 3).map(f => ({
-      title: '개선 필요',
+      title: f.content.length > 20 ? f.content.slice(0, 20) + '...' : f.content,
       description: f.content,
       action: '팀 논의를 통해 구체적인 개선 방안을 수립하세요'
     })),
     ...tries.slice(0, 2).map(f => ({
-      title: '시도 제안',
+      title: f.content.length > 20 ? f.content.slice(0, 20) + '...' : f.content,
       description: f.content,
       action: '다음 스프린트에 적용을 검토하세요'
     }))

@@ -1,5 +1,6 @@
 import prisma from '~/server/utils/prisma'
 import { ERROR } from '~/server/utils/error'
+import type { Issue } from '~/types'
 
 export default defineEventHandler(async (event) => {
   const { teamId } = event.context.auth
@@ -22,12 +23,6 @@ export default defineEventHandler(async (event) => {
   })
 
   // 각 세션의 이슈 파싱
-  interface Issue {
-    title: string
-    description: string
-    action: string
-  }
-
   const sessionData = sessions.map((s) => {
     const issues: Issue[] = s.insights.flatMap((insight) => {
       try {

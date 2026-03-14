@@ -146,6 +146,8 @@
           <button
             v-if="isLeader"
             class="btn-primary text-xs"
+            :disabled="!insight"
+            :title="!insight ? '인사이트 생성 후 추가할 수 있습니다' : undefined"
             @click="showActionForm = !showActionForm"
           >
             +
@@ -338,6 +340,7 @@
 
 <script setup lang="ts">
 import type { Session, Feedback, Insight } from '~/types'
+import { FEEDBACK_CATEGORIES } from '~/composables/useFeedbackCategories'
 
 interface ActionItem {
   id: string
@@ -399,11 +402,7 @@ onUnmounted(() => {
   if (pollTimer) clearInterval(pollTimer)
 })
 
-const categories = [
-  { value: 'KEEP' as const, label: 'Keep', emoji: '✅', textColor: 'text-keep' },
-  { value: 'PROBLEM' as const, label: 'Problem', emoji: '🔴', textColor: 'text-problem' },
-  { value: 'TRY' as const, label: 'Try', emoji: '💡', textColor: 'text-try' }
-]
+const categories = FEEDBACK_CATEGORIES
 
 const feedbacksByCategory = computed(() => {
   const result: Record<string, Feedback[]> = { KEEP: [], PROBLEM: [], TRY: [] }
@@ -417,6 +416,8 @@ const sortedFeedbacksByCategory = computed(() => {
     const items = [...(feedbacksByCategory.value[cat] ?? [])]
     if (sortBy.value === 'votes') {
       items.sort((a, b) => (b.voteCount ?? 0) - (a.voteCount ?? 0))
+    } else {
+      items.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
     }
     result[cat] = items
   }
@@ -539,7 +540,8 @@ async function addAction() {
       method: 'POST',
       body: {
         content: newActionContent.value.trim(),
-        ...(newActionDueDate.value ? { dueDate: newActionDueDate.value } : {})
+        ...(newActionDueDate.value ? { dueDate: newActionDueDate.value } : {}),
+        ...(insight.value?.id ? { insightId: insight.value.id } : {})
       }
     })
     await refreshActions()

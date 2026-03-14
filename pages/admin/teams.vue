@@ -114,9 +114,11 @@ const expandedTeamId = ref<string | null>(null)
 const membersLoading = ref(false)
 const teamMembers = ref<{ id: string; name: string; email: string; role: string }[]>([])
 
-const { data: teams, pending, refresh } = await useFetch<{
-  id: string; name: string; inviteCode: string; memberCount: number; sessionCount: number
-}[]>('/api/teams')
+const { data: teamsData, pending, refresh } = await useFetch<{
+  teams: { id: string; name: string; inviteCode: string; memberCount: number; sessionCount: number }[]
+}>('/api/teams')
+
+const teams = computed(() => teamsData.value?.teams ?? [])
 
 async function toggleTeam(teamId: string) {
   if (expandedTeamId.value === teamId) {
@@ -131,8 +133,8 @@ async function toggleTeam(teamId: string) {
 async function loadTeamMembers(teamId: string) {
   membersLoading.value = true
   try {
-    const allUsers = await $fetch<{ id: string; name: string; email: string; role: string; teamId: string | null }[]>('/api/admin/users')
-    teamMembers.value = allUsers.filter(u => u.teamId === teamId)
+    const res = await $fetch<{ users: { id: string; name: string; email: string; role: string; teamId: string | null }[] }>('/api/admin/users')
+    teamMembers.value = res.users.filter(u => u.teamId === teamId)
   } catch {
     toast.error('팀원 정보를 불러오지 못했습니다')
     teamMembers.value = []

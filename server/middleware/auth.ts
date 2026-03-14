@@ -1,5 +1,6 @@
 import { verifyToken } from '../utils/jwt'
 import { ERROR } from '../utils/error'
+import prisma from '../utils/prisma'
 import type { JwtPayload } from '~/types'
 
 const PUBLIC_ROUTES = [
@@ -7,7 +8,7 @@ const PUBLIC_ROUTES = [
   '/api/auth/login'
 ]
 
-export default defineEventHandler((event) => {
+export default defineEventHandler(async (event) => {
   const path = getRequestURL(event).pathname
 
   // 공개 라우트는 인증 스킵
@@ -23,12 +24,20 @@ export default defineEventHandler((event) => {
     throw ERROR.UNAUTHORIZED()
   }
 
+  let payload: JwtPayload
   try {
-    const payload = verifyToken(token) as JwtPayload
-    event.context.auth = payload
+    payload = verifyToken(token) as JwtPayload
   } catch {
     throw ERROR.UNAUTHORIZED()
   }
+
+  // 계정 비활성화 여부 실시간 확인
+  const user = await prisma.user.findUnique({ where: { id: payload.userId }, select: { isActive: true } })
+  if (!user || !user.isActive) {
+    throw ERROR.UNAUTHORIZED()
+  }
+
+  event.context.auth = payload
 })
 
 // context 타입 확장

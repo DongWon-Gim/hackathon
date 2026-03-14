@@ -107,6 +107,7 @@
 
 <script setup lang="ts">
 import type { Session } from '~/types'
+import { FEEDBACK_CATEGORIES } from '~/composables/useFeedbackCategories'
 
 const route = useRoute()
 const { isLeader } = useAuth()
@@ -144,11 +145,7 @@ const showCloseDialog = ref(false)
 
 const counts = computed(() => stats.value || {})
 
-const categories = [
-  { value: 'KEEP' as const, label: 'Keep', emoji: '✅', textColor: 'text-keep' },
-  { value: 'PROBLEM' as const, label: 'Problem', emoji: '🔴', textColor: 'text-problem' },
-  { value: 'TRY' as const, label: 'Try', emoji: '💡', textColor: 'text-try' }
-]
+const categories = FEEDBACK_CATEGORIES
 
 const placeholder = computed(() => ({
   KEEP: '잘 되었던 점을 자유롭게 적어주세요',
