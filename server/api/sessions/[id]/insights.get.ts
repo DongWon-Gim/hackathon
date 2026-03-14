@@ -16,5 +16,11 @@ export default defineEventHandler(async (event) => {
 
   if (!insight) return null
 
-  return { ...insight, issues: JSON.parse(insight.issues) }
+  let issues: unknown[]
+  try {
+    issues = JSON.parse(insight.issues)
+  } catch {
+    issues = []
+  }
+  return { ...insight, issues }
 })

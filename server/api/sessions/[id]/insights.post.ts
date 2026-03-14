@@ -24,6 +24,12 @@ export default defineEventHandler(async (event) => {
     throw ERROR.VALIDATION_ERROR('피드백이 없어 인사이트를 생성할 수 없습니다')
   }
 
+  // 이미 인사이트가 존재하면 중복 생성 차단 (useFallback 저장은 예외)
+  if (!body.useFallback) {
+    const existing = await prisma.insight.findFirst({ where: { sessionId: id } })
+    if (existing) throw ERROR.VALIDATION_ERROR('이미 인사이트가 생성되어 있습니다')
+  }
+
   // useFallback=true: 임시 인사이트 저장 요청
   if (body.useFallback) {
     const result = buildFallback(feedbacks)

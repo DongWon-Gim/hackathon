@@ -40,7 +40,7 @@
           <button class="btn-secondary text-sm" :disabled="loading" @click="retry">🔄 재변환</button>
           <button
             class="btn-primary flex-1 text-sm"
-            :disabled="loading || (!transformed && !error)"
+            :disabled="loading || submitting || (!transformed && !error)"
             @click="submit"
           >
             {{ error ? '원문으로 제출' : '제출' }}
@@ -64,6 +64,7 @@ const toast = useToast()
 
 const transformed = ref('')
 const loading = ref(true)
+const submitting = ref(false)
 const error = ref('')
 
 async function transform() {
@@ -84,6 +85,8 @@ async function transform() {
 }
 
 async function submit() {
+  if (submitting.value) return
+  submitting.value = true
   const content = error.value ? props.original : transformed.value
   try {
     await $fetch(`/api/sessions/${props.sessionId}/feedbacks`, {
@@ -94,6 +97,8 @@ async function submit() {
     emit('submitted')
   } catch {
     toast.error('피드백 제출에 실패했습니다')
+  } finally {
+    submitting.value = false
   }
 }
 
