@@ -6,6 +6,16 @@ const prisma = new PrismaClient()
 async function main() {
   console.log('Seeding database...')
 
+  // 샘플 팀
+  const adminteam = await prisma.team.upsert({
+    where: { inviteCode: 'DEMO-TEAM-001' },
+    update: {},
+    create: {
+      name: 'IT본부',
+      inviteCode: 'DEMO-TEAM-001'
+    }
+  })
+
   // 관리자 계정
   const adminPassword = await bcrypt.hash('admin1234', 10)
   const admin = await prisma.user.upsert({
@@ -15,17 +25,18 @@ async function main() {
       email: 'admin@retrolens.app',
       password: adminPassword,
       name: '관리자',
-      role: 'ADMIN'
+      role: 'ADMIN',
+      teamId: adminteam.id
     }
   })
 
   // 샘플 팀
   const team = await prisma.team.upsert({
-    where: { inviteCode: 'DEMO-TEAM-001' },
+    where: { inviteCode: 'DEMO-TEAM-002' },
     update: {},
     create: {
       name: '개발팀',
-      inviteCode: 'DEMO-TEAM-001'
+      inviteCode: 'DEMO-TEAM-002'
     }
   })
 
