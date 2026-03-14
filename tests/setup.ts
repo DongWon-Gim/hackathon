@@ -18,6 +18,8 @@ global.setCookie = vi.fn()
 global.getCookie = vi.fn()
 global.deleteCookie = vi.fn()
 global.setResponseStatus = vi.fn()
+global.getRequestURL = vi.fn((event: any) => event._url ?? new URL('http://localhost/api/test'))
+global.getRequestHeader = vi.fn((event: any, _key: string) => event._headers?.authorization)
 global.createError = ({ statusCode, data }: { statusCode: number; data: any }) => {
   const err: any = new Error(data?.message ?? 'error')
   err.statusCode = statusCode
