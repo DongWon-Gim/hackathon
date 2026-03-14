@@ -120,7 +120,7 @@ test.describe('인증 및 팀 합류 시나리오', () => {
   // 복합 플로우 테스트 — 실행 중인 서버 + 시드 데이터 필요
   // ---------------------------------------------------------------------------
 
-  test.skip('[TC-046] 신규 사용자가 회원가입 → 로그인 → 팀 합류 → 홈 화면까지 정상 완료된다', async ({ page }) => {
+  test('[TC-046] 신규 사용자가 회원가입 → 로그인 → 팀 합류 → 홈 화면까지 정상 완료된다', async ({ page }) => {
     /**
      * 이 테스트는 실행 중인 dev 서버와 유효한 팀 초대 코드가 필요합니다.
      * `npm run db:seed` 로 초기 데이터를 생성한 후 실행하세요.
@@ -158,7 +158,7 @@ test.describe('인증 및 팀 합류 시나리오', () => {
     await expect(page.locator('h1, [data-testid="session-list"]')).toBeVisible()
   })
 
-  test.skip('이미 등록된 이메일로 회원가입 시 에러 메시지가 표시된다', async ({ page }) => {
+  test('이미 등록된 이메일로 회원가입 시 에러 메시지가 표시된다', async ({ page }) => {
     /**
      * 이 테스트는 실행 중인 dev 서버와 미리 등록된 사용자 계정이 필요합니다.
      * `npm run db:seed` 로 초기 데이터를 생성한 후 실행하세요.
@@ -173,13 +173,30 @@ test.describe('인증 및 팀 합류 시나리오', () => {
     await expect(page.locator('text=이미 등록된 이메일')).toBeVisible()
   })
 
-  test.skip('잘못된 팀 코드 입력 시 에러 메시지가 표시된다', async ({ page }) => {
+  test('잘못된 팀 코드 입력 시 에러 메시지가 표시된다', async ({ page }) => {
     /**
      * 이 테스트는 로그인된 사용자 세션이 필요합니다.
-     * 로그인 상태에서 /join 에 접근하여 잘못된 코드를 입력합니다.
+     * 신규 가입 사용자는 팀이 없으므로 /join으로 리다이렉트된다.
      */
-    // 로그인 후 /join에서 잘못된 코드 입력
-    await page.goto('/join')
+    const uniqueEmail = `test-join-${Date.now()}@example.com`
+
+    // 신규 회원가입 (팀 없는 상태)
+    await page.goto('/register')
+    await page.fill('input[type="text"]', '테스트')
+    await page.fill('input[type="email"]', uniqueEmail)
+    const passwordFields = page.locator('input[type="password"]')
+    await passwordFields.nth(0).fill('password123')
+    await passwordFields.nth(1).fill('password123')
+    await page.click('button[type="submit"]')
+    await expect(page).toHaveURL(/\/login/)
+
+    // 로그인 — 팀 미배정이므로 /join으로 리다이렉트
+    await page.fill('input[type="email"]', uniqueEmail)
+    await page.fill('input[type="password"]', 'password123')
+    await page.click('button[type="submit"]')
+    await expect(page).toHaveURL(/\/join/)
+
+    // 잘못된 코드 입력
     await page.fill('input[type="text"]', 'INVALID-CODE')
     await page.click('button[type="submit"]')
     await expect(

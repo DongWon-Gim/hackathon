@@ -5,6 +5,7 @@
         <div
           v-for="toast in toasts"
           :key="toast.id"
+          data-testid="toast-message"
           class="pointer-events-auto flex items-center gap-3 px-4 py-3 rounded-lg border shadow-card text-sm font-medium min-w-[260px] max-w-sm"
           :class="toastClass(toast.type)"
         >

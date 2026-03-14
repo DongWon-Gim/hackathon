@@ -2,7 +2,7 @@
   <Teleport to="body">
     <div class="fixed inset-0 z-[200] flex items-center justify-center p-4">
       <div class="absolute inset-0 bg-base/80 backdrop-blur-sm" @click="$emit('close')" />
-      <div class="relative z-10 card max-w-lg w-full p-6">
+      <div data-testid="style-transform-modal" class="relative z-10 card max-w-lg w-full p-6">
         <div class="flex items-center justify-between mb-5">
           <h3 class="font-display font-bold text-ink">AI 문체 변환 미리보기</h3>
           <button class="btn-ghost text-xs p-1" @click="$emit('close')">✕</button>
@@ -12,7 +12,7 @@
           <!-- Original -->
           <div>
             <p class="section-label mb-2">📝 원본</p>
-            <div class="bg-elevated rounded-lg p-3 text-sm text-ink leading-relaxed border border-border">
+            <div data-testid="original-text" class="bg-elevated rounded-lg p-3 text-sm text-ink leading-relaxed border border-border">
               {{ original }}
             </div>
           </div>
@@ -26,7 +26,7 @@
             <div v-if="loading" class="bg-elevated rounded-lg p-3 flex items-center justify-center h-20">
               <LoadingSpinner size="sm" label="변환 중..." />
             </div>
-            <div v-else-if="transformed" class="bg-elevated rounded-lg p-3 text-sm text-ink leading-relaxed border border-accent/30">
+            <div v-else-if="transformed" data-testid="transformed-text" class="bg-elevated rounded-lg p-3 text-sm text-ink leading-relaxed border border-accent/30">
               {{ transformed }}
             </div>
             <div v-else-if="error" class="bg-danger/10 rounded-lg p-3 text-sm text-danger border border-danger/20">

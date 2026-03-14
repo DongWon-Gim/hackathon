@@ -21,7 +21,7 @@
       </div>
 
       <!-- Closed notice -->
-      <div v-if="session.status === 'CLOSED'" class="card p-4 mb-6 border-ink-subtle/30">
+      <div v-if="session.status === 'CLOSED'" data-testid="session-closed-message" class="card p-4 mb-6 border-ink-subtle/30">
         <p class="text-sm text-ink-muted text-center">이 세션은 마감되었습니다</p>
       </div>
 
@@ -32,6 +32,7 @@
           <button
             v-for="cat in categories"
             :key="cat.value"
+            :data-testid="`category-tab-${cat.value.toLowerCase()}`"
             class="flex-1 py-2 px-3 rounded-lg text-sm font-medium transition-all"
             :class="activeCategory === cat.value ? `bg-surface text-ink shadow-card` : 'text-ink-muted hover:text-ink'"
             @click="activeCategory = cat.value"
@@ -48,16 +49,22 @@
           </label>
           <textarea
             v-model="content"
+            data-testid="feedback-textarea"
             class="input resize-none h-28"
             :placeholder="placeholder"
             maxlength="500"
           />
           <div class="flex items-center justify-between mt-3">
             <label class="flex items-center gap-2 cursor-pointer select-none">
+              <input
+                type="checkbox"
+                data-testid="ai-transform-toggle"
+                v-model="aiTransform"
+                class="sr-only"
+              />
               <div
                 class="relative w-9 h-5 rounded-full transition-colors"
                 :class="aiTransform ? 'bg-accent' : 'bg-elevated border border-border'"
-                @click="aiTransform = !aiTransform"
               >
                 <div
                   class="absolute top-0.5 w-4 h-4 rounded-full bg-white shadow transition-transform"
@@ -66,17 +73,28 @@
               </div>
               <span class="text-xs text-ink-muted">AI 문체 변환</span>
             </label>
-            <button class="btn-primary text-sm" :disabled="!content.trim() || submitting" @click="handleSubmit">
+            <button data-testid="submit-button" class="btn-primary text-sm" :disabled="!content.trim() || submitting" @click="handleSubmit">
               <LoadingSpinner v-if="submitting" size="sm" />
               {{ submitting ? '제출 중...' : '제출' }}
             </button>
           </div>
         </div>
-
         <!-- Anonymity notice -->
         <p class="text-xs text-ink-subtle text-center mt-4">
           🔒 피드백은 익명으로 처리되며 제출 후 수정/삭제할 수 없습니다
         </p>
+      </template>
+
+      <!-- Disabled textarea for closed sessions -->
+      <template v-else>
+        <div class="card p-4 opacity-60">
+          <textarea
+            data-testid="feedback-textarea"
+            disabled
+            class="input resize-none h-28 cursor-not-allowed"
+            placeholder="마감된 세션에는 피드백을 입력할 수 없습니다"
+          />
+        </div>
       </template>
 
     </template>

@@ -36,9 +36,14 @@
         </button>
       </div>
 
+      <!-- Empty feedback state -->
+      <div v-if="!hasFeedbacks" data-testid="empty-feedback-state" class="text-center py-10 text-sm text-ink-muted mb-8">
+        아직 피드백이 없습니다
+      </div>
+
       <!-- Feedback columns -->
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-        <div v-for="cat in categories" :key="cat.value">
+      <div v-if="hasFeedbacks" data-testid="feedback-list" class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+        <div v-for="cat in categories" :key="cat.value" :data-testid="`${cat.value.toLowerCase()}-section`">
           <div class="flex items-center gap-2 mb-3">
             <span class="text-sm font-semibold" :class="cat.textColor">{{ cat.emoji }} {{ cat.label }}</span>
             <span class="font-mono text-xs text-ink-muted bg-elevated px-1.5 py-0.5 rounded">
@@ -51,6 +56,7 @@
             :message="`${cat.label} 피드백 없음`"
             icon="·"
           />
+
 
           <div v-else class="space-y-2">
             <div
@@ -95,6 +101,7 @@
             </button>
             <button
               v-if="isLeader && insight"
+              data-testid="delete-insight-button"
               class="text-xs px-2 py-1 rounded-md border border-danger/30 text-danger/60 hover:text-danger hover:bg-danger/10 transition-colors"
               :disabled="deletingInsight"
               @click="deleteInsight"
@@ -105,6 +112,7 @@
             </button>
             <button
               v-if="isLeader && !insight && session.status === 'CLOSED'"
+              data-testid="generate-insight-button"
               class="btn-primary text-xs"
               :disabled="generatingInsight || !hasFeedbacks"
               @click="generateInsight"
@@ -115,7 +123,7 @@
           </div>
         </div>
 
-        <div v-if="generatingInsight" class="text-center py-8 text-sm text-ink-muted">
+        <div v-if="generatingInsight" data-testid="insight-loading" class="text-center py-8 text-sm text-ink-muted">
           AI가 피드백을 분석하고 있습니다...
         </div>
 
@@ -126,8 +134,8 @@
         />
 
         <template v-else>
-          <p class="text-sm text-ink leading-relaxed mb-4 pb-4 border-b border-border">{{ insight.summary }}</p>
-          <div class="space-y-3">
+          <p data-testid="insight-summary" class="text-sm text-ink leading-relaxed mb-4 pb-4 border-b border-border">{{ insight.summary }}</p>
+          <div data-testid="insight-issues" class="space-y-3">
             <div
               v-for="(issue, i) in insight.issues"
               :key="i"
