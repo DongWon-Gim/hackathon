@@ -73,5 +73,7 @@ issues는 3~5개를 추출하고, PROBLEM 카테고리를 우선적으로 반영
   const block = response.content[0]
   if (block.type !== 'text') throw new Error('Unexpected response type')
 
-  return JSON.parse(block.text.trim())
+  // 마크다운 코드블록 제거 후 파싱
+  const raw = block.text.trim().replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '')
+  return JSON.parse(raw)
 }
