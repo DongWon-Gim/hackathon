@@ -9,6 +9,7 @@ export interface AuthUser {
   name: string
   role: Role
   teamId: string | null
+  teamName: string | null
 }
 
 export interface JwtPayload {

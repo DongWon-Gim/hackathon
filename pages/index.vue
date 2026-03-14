@@ -2,7 +2,7 @@
   <div class="page-container">
     <!-- Header -->
     <div class="mb-8">
-      <p class="section-label mb-1">{{ user?.name }}의 팀</p>
+      <p class="section-label mb-1">{{ user?.teamName ?? user?.name }}</p>
       <h1 class="page-title">회고 세션</h1>
     </div>
 
