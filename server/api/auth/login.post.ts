@@ -12,7 +12,7 @@ export default defineEventHandler(async (event) => {
   validateRequired(password, '비밀번호')
   validateEmail(email)
 
-  const user = await prisma.user.findUnique({ where: { email } })
+  const user = await prisma.user.findUnique({ where: { email }, include: { team: { select: { name: true } } } })
   if (!user || !user.isActive) throw ERROR.INVALID_CREDENTIALS()
 
   const valid = await bcrypt.compare(password, user.password)
@@ -28,6 +28,6 @@ export default defineEventHandler(async (event) => {
   })
 
   return {
-    user: { id: user.id, email: user.email, name: user.name, role: user.role, teamId: user.teamId }
+    user: { id: user.id, email: user.email, name: user.name, role: user.role, teamId: user.teamId, teamName: user.team?.name ?? null }
   }
 })

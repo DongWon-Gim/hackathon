@@ -28,5 +28,5 @@ export default defineEventHandler(async (event) => {
     maxAge: 60 * 60 * 24
   })
 
-  return { user: updated, team: { id: team.id, name: team.name } }
+  return { user: { ...updated, teamName: team.name }, team: { id: team.id, name: team.name } }
 })
