@@ -46,21 +46,25 @@ npm run test
 # 단일 테스트 파일 실행
 npx vitest run tests/unit/server/auth.test.ts
 
-# DB 마이그레이션
-npx prisma migrate dev
-
-# DB 클라이언트 생성
+# DB 클라이언트 생성 (SSL 오류 시: node --use-system-ca node_modules/prisma/build/index.js generate)
 npx prisma generate
 
 # Seed 실행 (관리자 계정 등)
-npx prisma db seed
+npm run db:seed
+
+# Turso DB에 스키마 최초 적용 (테이블 생성)
+npm run db:turso:push
+
+# Turso DB 스키마 변경 시 diff SQL 생성
+npm run db:turso:diff
 ```
 
 환경변수는 `.env` 파일에 설정한다 (`.env.example` 참조):
+- `DATABASE_URL` — Prisma CLI 전용 로컬 파일 경로 (`file:./dev.db`)
+- `TURSO_DATABASE_URL` — 런타임 DB URL (`libsql://xxx.turso.io` 또는 `file:./dev.db`)
+- `TURSO_AUTH_TOKEN` — Turso 인증 토큰 (로컬 파일 사용 시 빈 문자열)
 - `JWT_SECRET` — JWT 서명 키
 - `ANTHROPIC_API_KEY` — Claude API 키
-- `TURSO_DATABASE_URL` — Turso DB URL (로컬: `file:./dev.db`, 프로덕션: `libsql://xxx.turso.io`)
-- `TURSO_AUTH_TOKEN` — Turso 인증 토큰 (로컬 파일 사용 시 빈 문자열)
 
 ---
 

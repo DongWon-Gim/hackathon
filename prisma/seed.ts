@@ -1,7 +1,13 @@
 import { PrismaClient } from '@prisma/client'
+import { PrismaLibSQL } from '@prisma/adapter-libsql'
+import { createClient } from '@libsql/client'
 import bcrypt from 'bcrypt'
 
-const prisma = new PrismaClient()
+const url = process.env.TURSO_DATABASE_URL!
+const authToken = process.env.TURSO_AUTH_TOKEN
+const libsql = createClient({ url, authToken })
+const adapter = new PrismaLibSQL(libsql)
+const prisma = new PrismaClient({ adapter } as any)
 
 async function main() {
   console.log('Seeding database...')
