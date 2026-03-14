@@ -14,6 +14,11 @@ prisma/migrations/
 .env.*
 !.env.example
 
+# Test artifacts (generated, not committed)
+coverage/
+test-results/
+playwright-report/
+
 # OS
 .DS_Store
 Thumbs.db
