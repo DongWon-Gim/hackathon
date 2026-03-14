@@ -1,0 +1,60 @@
+/**
+ * 테스트용 사용자 픽스처
+ */
+export const fixtures = {
+  adminUser: {
+    id: 'admin-user-id',
+    email: 'admin@example.com',
+    password: 'hashed-password', // bcrypt 해시값 (실제 테스트에서는 실제 해시 사용)
+    name: '최고관리자',
+    role: 'ADMIN' as const,
+    isActive: true,
+    teamId: null,
+    createdAt: new Date('2026-01-01'),
+    updatedAt: new Date('2026-01-01'),
+  },
+  leaderUser: {
+    id: 'leader-user-id',
+    email: 'leader@example.com',
+    password: 'hashed-password',
+    name: '김팀장',
+    role: 'LEADER' as const,
+    isActive: true,
+    teamId: 'team-1',
+    createdAt: new Date('2026-01-01'),
+    updatedAt: new Date('2026-01-01'),
+  },
+  memberUser: {
+    id: 'member-user-id',
+    email: 'member@example.com',
+    password: 'hashed-password',
+    name: '이개발',
+    role: 'MEMBER' as const,
+    isActive: true,
+    teamId: 'team-1',
+    createdAt: new Date('2026-01-01'),
+    updatedAt: new Date('2026-01-01'),
+  },
+  inactiveUser: {
+    id: 'inactive-user-id',
+    email: 'inactive@example.com',
+    password: 'hashed-password',
+    name: '박퇴사',
+    role: 'MEMBER' as const,
+    isActive: false,
+    teamId: 'team-2',
+    createdAt: new Date('2026-01-01'),
+    updatedAt: new Date('2026-01-01'),
+  },
+  noTeamUser: {
+    id: 'no-team-user-id',
+    email: 'noteam@example.com',
+    password: 'hashed-password',
+    name: '신입',
+    role: 'MEMBER' as const,
+    isActive: true,
+    teamId: null,
+    createdAt: new Date('2026-01-01'),
+    updatedAt: new Date('2026-01-01'),
+  },
+}
