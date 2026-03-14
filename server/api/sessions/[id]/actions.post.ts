@@ -12,7 +12,7 @@ export default defineEventHandler(async (event) => {
   if (session.teamId !== teamId) throw ERROR.TEAM_MISMATCH()
 
   const body = await readBody(event)
-  const { content, dueDate, assigneeId, feedbackId, insightId } = body ?? {}
+  const { content, dueDate, assigneeId, feedbackId, insightId, issueIndex } = body ?? {}
 
   if (!content || typeof content !== 'string' || content.trim() === '') {
     throw ERROR.VALIDATION_ERROR('content는 필수입니다')
@@ -44,7 +44,9 @@ export default defineEventHandler(async (event) => {
       dueDate: dueDate ? new Date(dueDate) : undefined,
       assigneeId: assigneeId ?? undefined,
       feedbackId: feedbackId ?? undefined,
-      insightId: insightId ?? undefined
+      insightId: insightId ?? undefined,
+      sessionId: id,
+      issueIndex: typeof issueIndex === 'number' ? issueIndex : undefined
     },
     include: {
       assignee: { select: { name: true } }
@@ -60,6 +62,8 @@ export default defineEventHandler(async (event) => {
     assigneeName: action.assignee?.name ?? null,
     feedbackId: action.feedbackId,
     insightId: action.insightId,
+    sessionId: action.sessionId,
+    issueIndex: action.issueIndex,
     createdAt: action.createdAt
   }
 })

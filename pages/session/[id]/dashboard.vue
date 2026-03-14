@@ -134,6 +134,16 @@
               <p class="text-sm font-semibold text-ink mb-1">{{ issue.title }}</p>
               <p class="text-xs text-ink-muted mb-2">{{ issue.description }}</p>
               <p class="text-xs text-accent">→ {{ issue.action }}</p>
+              <div v-if="isLeader" class="mt-2">
+                <button
+                  v-if="!usedIssueIndices.has(i)"
+                  class="text-xs px-2 py-1 rounded-md bg-accent/10 text-accent hover:bg-accent/20 transition-colors"
+                  @click="openIssueAction(issue.action, i)"
+                >
+                  + 액션 아이템 추가
+                </button>
+                <span v-else class="text-xs text-ink-muted">✓ 전환됨</span>
+              </div>
             </div>
           </div>
         </template>
@@ -146,38 +156,10 @@
           <button
             v-if="isLeader"
             class="btn-primary text-xs"
-            :disabled="!insight"
-            :title="!insight ? '인사이트 생성 후 추가할 수 있습니다' : undefined"
-            @click="showActionForm = !showActionForm"
+            @click="prefillIssueIndex = null; showActionModal = true"
           >
             +
           </button>
-        </div>
-
-        <!-- Add form -->
-        <div v-if="showActionForm" class="mb-4 p-3 bg-elevated rounded-lg border border-border space-y-3">
-          <textarea
-            v-model="newActionContent"
-            class="input w-full text-sm resize-none"
-            rows="2"
-            placeholder="액션 아이템 내용을 입력하세요"
-          />
-          <input
-            v-model="newActionDueDate"
-            type="date"
-            class="input w-full text-sm"
-          />
-          <div class="flex gap-2 justify-end">
-            <button class="btn-ghost text-xs" @click="cancelActionForm">취소</button>
-            <button
-              class="btn-primary text-xs"
-              :disabled="!newActionContent.trim() || savingAction"
-              @click="addAction"
-            >
-              <LoadingSpinner v-if="savingAction" size="sm" />
-              {{ savingAction ? '저장 중...' : '저장' }}
-            </button>
-          </div>
         </div>
 
         <EmptyState
@@ -291,6 +273,42 @@
     </template>
   </div>
 
+  <!-- 액션 아이템 추가 모달 -->
+  <Teleport to="body">
+    <Transition name="modal">
+      <div v-if="showActionModal" class="fixed inset-0 z-[200] flex items-center justify-center p-4">
+        <div class="absolute inset-0 bg-base/80 backdrop-blur-sm" @click="cancelActionForm" />
+        <div class="relative z-10 card max-w-md w-full p-6">
+          <h3 class="font-display font-bold text-ink mb-4">액션 아이템 추가</h3>
+          <div class="space-y-3">
+            <textarea
+              v-model="newActionContent"
+              class="input w-full text-sm resize-none"
+              rows="3"
+              placeholder="액션 아이템 내용을 입력하세요"
+            />
+            <input
+              v-model="newActionDueDate"
+              type="date"
+              class="input w-full text-sm"
+            />
+          </div>
+          <div class="flex gap-2 justify-end mt-4">
+            <button class="btn-ghost text-sm" @click="cancelActionForm">취소</button>
+            <button
+              class="btn-primary text-sm"
+              :disabled="!newActionContent.trim() || savingAction"
+              @click="addAction"
+            >
+              <LoadingSpinner v-if="savingAction" size="sm" />
+              {{ savingAction ? '저장 중...' : '저장' }}
+            </button>
+          </div>
+        </div>
+      </div>
+    </Transition>
+  </Teleport>
+
   <!-- AI 실패 시 임시 인사이트 선택 모달 -->
   <Teleport to="body">
     <Transition name="modal">
@@ -339,20 +357,8 @@
 </template>
 
 <script setup lang="ts">
-import type { Session, Feedback, Insight } from '~/types'
+import type { Session, Feedback, Insight, ActionItem } from '~/types'
 import { FEEDBACK_CATEGORIES } from '~/composables/useFeedbackCategories'
-
-interface ActionItem {
-  id: string
-  content: string
-  status: 'PENDING' | 'COMPLETED'
-  dueDate?: string | null
-  assigneeId?: string | null
-  assigneeName?: string | null
-  feedbackId?: string | null
-  insightId?: string | null
-  createdAt: string
-}
 
 interface HistoryIssue {
   title: string
@@ -520,14 +526,26 @@ const { data: actions, refresh: refreshActions } = await useFetch<ActionItem[]>(
   { lazy: true }
 )
 
-const showActionForm = ref(false)
+const showActionModal = ref(false)
+const prefillIssueIndex = ref<number | null>(null)
 const newActionContent = ref('')
 const newActionDueDate = ref('')
 const savingAction = ref(false)
 const togglingAction = ref(new Set<string>())
 
+const usedIssueIndices = computed(() =>
+  new Set(actions.value?.filter(a => a.issueIndex !== null).map(a => a.issueIndex as number))
+)
+
+function openIssueAction(actionText: string, index: number) {
+  newActionContent.value = actionText
+  prefillIssueIndex.value = index
+  showActionModal.value = true
+}
+
 function cancelActionForm() {
-  showActionForm.value = false
+  showActionModal.value = false
+  prefillIssueIndex.value = null
   newActionContent.value = ''
   newActionDueDate.value = ''
 }
@@ -541,7 +559,8 @@ async function addAction() {
       body: {
         content: newActionContent.value.trim(),
         ...(newActionDueDate.value ? { dueDate: newActionDueDate.value } : {}),
-        ...(insight.value?.id ? { insightId: insight.value.id } : {})
+        ...(insight.value?.id ? { insightId: insight.value.id } : {}),
+        ...(prefillIssueIndex.value !== null ? { issueIndex: prefillIssueIndex.value } : {})
       }
     })
     await refreshActions()

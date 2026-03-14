@@ -9,17 +9,11 @@ export default defineEventHandler(async (event) => {
 
   const action = await prisma.actionItem.findUnique({
     where: { id },
-    include: {
-      feedback: { include: { session: true } },
-      insight: { include: { session: true } }
-    }
+    include: { session: { select: { teamId: true } } }
   })
 
   if (!action) throw ERROR.NOT_FOUND('액션 아이템')
-
-  // 세션의 팀 소속 확인 (feedbackId 또는 insightId를 통해)
-  const sessionTeamId = action.feedback?.session?.teamId ?? action.insight?.session?.teamId
-  if (sessionTeamId && sessionTeamId !== teamId) throw ERROR.TEAM_MISMATCH()
+  if (action.session.teamId !== teamId) throw ERROR.TEAM_MISMATCH()
 
   const body = await readBody(event)
   const { status, content, dueDate, assigneeId } = body ?? {}
@@ -66,6 +60,8 @@ export default defineEventHandler(async (event) => {
     assigneeName: updated.assignee?.name ?? null,
     feedbackId: updated.feedbackId,
     insightId: updated.insightId,
+    sessionId: updated.sessionId,
+    issueIndex: updated.issueIndex,
     createdAt: updated.createdAt,
     updatedAt: updated.updatedAt
   }

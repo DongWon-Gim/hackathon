@@ -9,32 +9,10 @@ export default defineEventHandler(async (event) => {
   if (!session) throw ERROR.NOT_FOUND('세션')
   if (session.teamId !== teamId) throw ERROR.TEAM_MISMATCH()
 
-  // 세션의 feedbacks와 insights에 연결된 ActionItem 수집
-  const [feedbackActions, insightActions] = await Promise.all([
-    prisma.actionItem.findMany({
-      where: {
-        feedback: { sessionId: id }
-      },
-      include: {
-        assignee: { select: { name: true } }
-      }
-    }),
-    prisma.actionItem.findMany({
-      where: {
-        insight: { sessionId: id }
-      },
-      include: {
-        assignee: { select: { name: true } }
-      }
-    })
-  ])
-
-  // 중복 제거 (feedbackId와 insightId 모두 있는 경우 방지)
-  const seen = new Set<string>()
-  const actions = [...feedbackActions, ...insightActions].filter((a) => {
-    if (seen.has(a.id)) return false
-    seen.add(a.id)
-    return true
+  const actions = await prisma.actionItem.findMany({
+    where: { sessionId: id },
+    include: { assignee: { select: { name: true } } },
+    orderBy: { createdAt: 'desc' }
   })
 
   return actions.map((a) => ({
@@ -46,6 +24,8 @@ export default defineEventHandler(async (event) => {
     assigneeName: a.assignee?.name ?? null,
     feedbackId: a.feedbackId,
     insightId: a.insightId,
+    sessionId: a.sessionId,
+    issueIndex: a.issueIndex,
     createdAt: a.createdAt
   }))
 })

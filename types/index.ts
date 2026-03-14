@@ -77,5 +77,7 @@ export interface ActionItem {
   assigneeName: string | null
   feedbackId: string | null
   insightId: string | null
+  sessionId: string
+  issueIndex: number | null
   createdAt: string
 }

@@ -50,10 +50,11 @@ model Session {
   teamId      String
   creatorId   String
 
-  team      Team       @relation(fields: [teamId], references: [id])
-  creator   User       @relation("creator", fields: [creatorId], references: [id])
-  feedbacks Feedback[]
-  insights  Insight[]
+  team        Team         @relation(fields: [teamId], references: [id])
+  creator     User         @relation("creator", fields: [creatorId], references: [id])
+  feedbacks   Feedback[]
+  insights    Insight[]
+  actionItems ActionItem[]
 }
 
 // ─── 피드백 (익명 - userId 절대 저장하지 않음!) ───
@@ -105,10 +106,13 @@ model ActionItem {
   assigneeId String?
   feedbackId String?
   insightId  String?
+  sessionId  String
+  issueIndex Int?
   createdAt  DateTime  @default(now())
   updatedAt  DateTime  @updatedAt
 
   assignee User?     @relation("assignee", fields: [assigneeId], references: [id])
   feedback Feedback? @relation(fields: [feedbackId], references: [id])
   insight  Insight?  @relation(fields: [insightId], references: [id])
+  session  Session   @relation(fields: [sessionId], references: [id])
 }
