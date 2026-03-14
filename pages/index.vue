@@ -26,7 +26,7 @@
         :key="session.id"
         :to="session.status === 'ACTIVE' ? `/session/${session.id}` : `/session/${session.id}/dashboard`"
         class="card-hover flex items-center justify-between"
-        :class="session.hasInsight ? 'border-try/30' : ''"
+        :class="session.hasInsight ? 'border-accent/50 shadow-glow' : ''"
       >
         <div class="flex-1 min-w-0">
           <div class="flex items-center gap-2 mb-1 flex-wrap">

@@ -80,8 +80,7 @@
       </div>
 
       <!-- AI Insight -->
-      <div class="card p-5 transition-colors duration-200" :class="insight ? 'border-accent/50 shadow-glow' : ''"
-      >
+      <div class="card p-5">
         <div class="flex items-center justify-between mb-4">
           <p class="section-label">AI 인사이트</p>
           <div class="flex items-center gap-2">
