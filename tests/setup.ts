@@ -1,15 +1,38 @@
 /**
  * 테스트 전역 설정 (vitest setup file)
- * vitest.config.ts의 setupFiles에 등록한다.
  */
 import { vi } from 'vitest'
 
-// 환경 변수 설정 (테스트 전용)
-process.env.JWT_SECRET = process.env.JWT_SECRET || 'test-jwt-secret-key-for-testing-only'
-process.env.DATABASE_URL = process.env.DATABASE_URL || 'file:./test.db'
-process.env.ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY || 'test-anthropic-key'
+// ─── 환경 변수 ───
+process.env.JWT_SECRET = 'test-jwt-secret-key-for-testing-only'
+process.env.DATABASE_URL = 'file:./test.db'
+process.env.TURSO_DATABASE_URL = 'file:./test.db'
+process.env.TURSO_AUTH_TOKEN = ''
+process.env.ANTHROPIC_API_KEY = 'test-anthropic-key'
 
-// Nuxt 자동 임포트 모킹 (단위 테스트 환경에서 Nuxt 런타임 없이 실행)
+// ─── Nuxt/h3 서버 글로벌 모킹 ───
+global.defineEventHandler = (fn: any) => fn
+global.readBody = (event: any) => Promise.resolve((event as any)._body ?? {})
+global.getRouterParam = (event: any, key: string) => (event as any)._params?.[key]
+global.setCookie = vi.fn()
+global.getCookie = vi.fn()
+global.deleteCookie = vi.fn()
+global.setResponseStatus = vi.fn()
+global.createError = ({ statusCode, data }: { statusCode: number; data: any }) => {
+  const err: any = new Error(data?.message ?? 'error')
+  err.statusCode = statusCode
+  err.data = data
+  return err
+}
+
+// ─── useRuntimeConfig 글로벌 모킹 ───
+global.useRuntimeConfig = () => ({
+  jwtSecret: 'test-jwt-secret-key-for-testing-only',
+  anthropicApiKey: 'test-anthropic-key',
+  public: {},
+})
+
+// ─── Nuxt 클라이언트 자동 임포트 모킹 ───
 vi.mock('#app', () => ({
   defineNuxtPlugin: vi.fn(),
   useNuxtApp: vi.fn(() => ({})),
@@ -21,4 +44,9 @@ vi.mock('#app', () => ({
   useCookie: vi.fn(() => ({ value: null })),
   useFetch: vi.fn(),
   useRouter: vi.fn(() => ({ push: vi.fn() })),
+  useState: vi.fn((key: string, init: () => any) => {
+    const { ref } = require('vue')
+    return ref(init())
+  }),
+  readonly: vi.fn((v: any) => v),
 }))

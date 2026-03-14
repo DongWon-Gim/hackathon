@@ -22,11 +22,13 @@ export const mockPrisma = {
   },
   session: {
     findUnique: vi.fn(),
+    findFirst: vi.fn(),
     findMany: vi.fn(),
     create: vi.fn(),
     update: vi.fn(),
   },
   feedback: {
+    findUnique: vi.fn(),
     findMany: vi.fn(),
     create: vi.fn(),
     count: vi.fn(),
@@ -35,9 +37,11 @@ export const mockPrisma = {
     findUnique: vi.fn(),
     create: vi.fn(),
     delete: vi.fn(),
+    count: vi.fn(),
   },
   insight: {
     findUnique: vi.fn(),
+    findFirst: vi.fn(),
     findMany: vi.fn(),
     create: vi.fn(),
     update: vi.fn(),
@@ -51,7 +55,7 @@ export const mockPrisma = {
 }
 
 vi.mock('~/server/utils/prisma', () => ({
-  prisma: mockPrisma,
+  default: mockPrisma,
 }))
 
 // ─── Claude API 모킹 ───
@@ -68,4 +72,21 @@ vi.mock('~/server/utils/claude', () => ({
  */
 export function resetMocks() {
   vi.clearAllMocks()
+}
+
+/**
+ * 테스트용 h3 이벤트 객체 생성
+ */
+export function createMockEvent(options: {
+  body?: Record<string, any>
+  params?: Record<string, string>
+  auth?: { userId: string; role: string; teamId: string | null }
+} = {}) {
+  return {
+    _body: options.body ?? {},
+    _params: options.params ?? {},
+    context: {
+      auth: options.auth ?? { userId: 'member-user-id', role: 'MEMBER', teamId: 'team-1' },
+    },
+  }
 }

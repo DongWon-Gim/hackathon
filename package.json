@@ -15,7 +15,9 @@
     "db:seed": "tsx prisma/seed.ts",
     "db:studio": "prisma studio",
     "db:turso:push": "npx prisma migrate diff --from-empty --to-schema-datamodel prisma/schema.prisma --script > turso-schema.sql && turso db shell hackathon-dongwon-gim < turso-schema.sql",
-    "db:turso:diff": "npx prisma migrate diff --from-url \"${TURSO_DATABASE_URL}?authToken=${TURSO_AUTH_TOKEN}\" --to-schema-datamodel prisma/schema.prisma --script"
+    "db:turso:diff": "npx prisma migrate diff --from-url \"${TURSO_DATABASE_URL}?authToken=${TURSO_AUTH_TOKEN}\" --to-schema-datamodel prisma/schema.prisma --script",
+    "test:e2e": "playwright test",
+    "test:e2e:install": "playwright install chromium"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.27.0",
@@ -33,6 +35,7 @@
   },
   "devDependencies": {
     "@nuxtjs/tailwindcss": "^6.12.0",
+    "@playwright/test": "^1.58.2",
     "@types/bcrypt": "^5.0.2",
     "@types/jsonwebtoken": "^9.0.7",
     "@types/node": "^22.0.0",
