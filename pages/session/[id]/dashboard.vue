@@ -62,8 +62,10 @@
               <div class="flex items-center justify-end">
                 <button
                   class="flex items-center gap-1.5 text-xs transition-colors px-2 py-1 rounded-md"
-                  :class="fb.hasVoted ? 'text-accent bg-accent/10' : 'text-ink-muted hover:text-ink hover:bg-elevated'"
-                  :disabled="votingInProgress.has(fb.id)"
+                  :class="session.status === 'CLOSED'
+                    ? 'text-ink-subtle cursor-default'
+                    : fb.hasVoted ? 'text-accent bg-accent/10' : 'text-ink-muted hover:text-ink hover:bg-elevated'"
+                  :disabled="votingInProgress.has(fb.id) || session.status === 'CLOSED'"
                   @click="toggleVote(fb)"
                 >
                   <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -78,7 +80,8 @@
       </div>
 
       <!-- AI Insight -->
-      <div class="card p-5">
+      <div class="card p-5 transition-colors duration-200" :class="insight ? 'border-accent/50 shadow-glow' : ''"
+      >
         <div class="flex items-center justify-between mb-4">
           <p class="section-label">AI 인사이트</p>
           <div class="flex items-center gap-2">

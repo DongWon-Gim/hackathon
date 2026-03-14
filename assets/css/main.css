@@ -82,7 +82,7 @@
   }
 
   .badge-closed {
-    @apply badge bg-ink-subtle/20 text-ink-subtle border border-ink-subtle/30;
+    @apply badge bg-ink-muted text-white border border-ink-muted/70;
   }
 
   .badge-insight {
