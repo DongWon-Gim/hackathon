@@ -3,7 +3,6 @@ import { PrismaLibSQL } from '@prisma/adapter-libsql'
 import { createClient } from '@libsql/client'
 
 declare global {
-  // eslint-disable-next-line no-var
   var __prisma: PrismaClient | undefined
 }
 

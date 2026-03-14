@@ -9,6 +9,8 @@ jobs:
   health-check:
     name: Production Health Check
     runs-on: ubuntu-latest
+    permissions:
+      issues: write   # GitHub Issue 자동 생성 권한
 
     steps:
       - name: Check production API health

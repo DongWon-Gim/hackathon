@@ -69,6 +69,8 @@ jobs:
     name: Deploy to Production
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/master'
+    permissions:
+      issues: write   # 배포 실패 시 GitHub Issue 자동 생성 권한
     environment:
       name: production
       url: ${{ steps.deploy.outputs.production-url }}
