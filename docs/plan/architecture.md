@@ -2,7 +2,7 @@
 
 - **작성일:** 2026-03-13
 - **기반 문서:** PRD v1.2.0, 기획 분석 문서, 화면 기획서
-- **버전:** 1.0.0
+- **버전:** 1.2.0 (2026-03-14 Turso 마이그레이션 + ActionItem 스키마 반영)
 
 ---
 
@@ -14,7 +14,7 @@
 | 언어 | TypeScript | 타입 안전성으로 런타임 에러 사전 방지, IDE 자동완성 지원 |
 | 스타일링 | Tailwind CSS | 유틸리티 우선 CSS로 빠른 UI 구현, 별도 디자인 시스템 없이도 일관된 UI 가능 |
 | 백엔드 API | Nuxt 3 Server Routes | 별도 백엔드 서버 불필요, 프론트엔드와 동일 프로젝트에서 API 개발 |
-| 데이터베이스 | SQLite | 별도 DB 서버 불필요, 파일 기반으로 설정 간편, 해커톤에 적합 |
+| 데이터베이스 | Turso (libSQL/SQLite 호환) | SQLite 호환 분산 DB, Vercel 서버리스 환경에서 파일 기반 SQLite 사용 불가 문제 해결. 초기 로컬 개발은 SQLite 파일 사용, 배포 시 Turso로 전환 |
 | ORM | Prisma | 타입 안전한 DB 쿼리, 마이그레이션 자동화, 스키마 기반 개발 |
 | 인증 | JWT (jsonwebtoken + bcrypt) | 세션 서버 불필요, 토큰 기반 무상태 인증, 구현 단순 |
 | AI | Anthropic Claude Haiku API (claude-haiku-4-5-20251001) | 문체 변환 및 인사이트 생성에 최적화된 언어 모델 |
@@ -65,8 +65,8 @@
 │  │       │          │  │ (외부 서비스) │  │ (비밀번호    │   │
 │  │       ▼          │  │              │  │  해싱)       │   │
 │  │ ┌────────────┐   │  └──────────────┘  └──────────────┘   │
-│  │ │  SQLite    │   │                                        │
-│  │ │  (파일 DB) │   │                                        │
+│  │ │  Turso     │   │                                        │
+│  │ │ (libSQL)   │   │                                        │
 │  │ └────────────┘   │                                        │
 │  └──────────────────┘                                        │
 └──────────────────────────────────────────────────────────────┘
@@ -75,7 +75,7 @@
 **데이터 흐름 요약:**
 1. 클라이언트(Vue 3 페이지)에서 `useFetch`/`$fetch`로 API 호출
 2. Nuxt Server Routes에서 요청 수신, JWT 미들웨어로 인증/인가 검증
-3. Prisma ORM을 통해 SQLite DB 조회/저장
+3. Prisma ORM (`@prisma/adapter-libsql`)을 통해 Turso DB 조회/저장
 4. AI 기능 요청 시 Claude API 호출 후 결과 반환
 5. SSR로 초기 페이지 렌더링, 이후 클라이언트 사이드 하이드레이션
 
@@ -240,7 +240,8 @@ generator client {
 
 datasource db {
   provider = "sqlite"
-  url      = env("DATABASE_URL")
+  url      = env("DATABASE_URL")  // Prisma CLI 전용 (로컬 파일 경로)
+  // 런타임: TURSO_DATABASE_URL + TURSO_AUTH_TOKEN (server/utils/prisma.ts에서 PrismaLibSQL 어댑터 사용)
 }
 
 // ─── 사용자 ───
@@ -292,10 +293,11 @@ model Session {
   teamId      String
   creatorId   String
 
-  team      Team       @relation(fields: [teamId], references: [id])
-  creator   User       @relation("creator", fields: [creatorId], references: [id])
-  feedbacks Feedback[]
-  insights  Insight[]
+  team        Team         @relation(fields: [teamId], references: [id])
+  creator     User         @relation("creator", fields: [creatorId], references: [id])
+  feedbacks   Feedback[]
+  insights    Insight[]
+  actionItems ActionItem[] // Plan-2: 직접 역관계 추가
 }
 
 enum SessionStatus {
@@ -352,6 +354,8 @@ model Insight {
 }
 
 // ─── 액션 아이템 ───
+// Plan-2 변경: sessionId 직접 참조 추가 → GET 시 2쿼리+중복제거 → 단일 sessionId 쿼리로 단순화
+// issueIndex: 인사이트 issues 배열 인덱스(0-based), 동일 이슈에서 중복 액션 아이템 생성 방지
 model ActionItem {
   id         String           @id @default(cuid())
   content    String
@@ -360,12 +364,15 @@ model ActionItem {
   assigneeId String?
   feedbackId String?
   insightId  String?
+  sessionId  String                          // Plan-2 추가: 세션 직접 참조
+  issueIndex Int?                            // Plan-2 추가: 인사이트 이슈 인덱스 (0-based)
   createdAt  DateTime         @default(now())
   updatedAt  DateTime         @updatedAt
 
   assignee User?     @relation("assignee", fields: [assigneeId], references: [id])
   feedback Feedback? @relation(fields: [feedbackId], references: [id])
   insight  Insight?  @relation(fields: [insightId], references: [id])
+  session  Session   @relation(fields: [sessionId], references: [id]) // Plan-2 추가
 }
 
 enum ActionItemStatus {
@@ -406,7 +413,8 @@ User ──────────── Team
 - Feedback 1:N Vote (피드백에 여러 투표)
 - User 1:N Vote (사용자가 여러 투표, 실명)
 - Session 1:N Insight (세션에 여러 인사이트)
-- Feedback/Insight 1:N ActionItem (액션 아이템 출처)
+- Session 1:N ActionItem (Plan-2: 세션 직접 참조)
+- Feedback/Insight 1:N ActionItem (액션 아이템 출처, 선택적)
 - User 1:N ActionItem (담당자)
 
 핵심: Feedback 테이블에 userId 없음 (익명성 보장)
@@ -481,8 +489,10 @@ User ──────────── Team
 | 메서드 | 경로 | 설명 | 인증 | 권한 | 요청 Body | 응답 | 관련 기능 |
 |--------|------|------|------|------|----------|------|----------|
 | GET | `/api/sessions/:id/actions` | 액션 아이템 목록 | O | TEAM | - | `{actions[]}` | FEAT-008 |
-| POST | `/api/sessions/:id/actions` | 액션 아이템 생성 | O | LEADER+ | `{content, issueIndex?, assigneeId?, dueDate?}` | `{action}` | FEAT-008 |
+| POST | `/api/sessions/:id/actions` | 액션 아이템 생성 | O | LEADER+ | `{content, issueIndex?, assigneeId?, dueDate?, insightId?}` | `{action}` | FEAT-008 |
 | PATCH | `/api/actions/:id` | 상태/담당자/기한 변경 | O | TEAM | `{status?, assigneeId?, dueDate?}` | `{action}` | FEAT-008 |
+
+> **Plan-2 변경:** `POST /api/sessions/:id/actions`에 `issueIndex` 추가. `GET /api/sessions/:id/actions`는 Promise.all 2쿼리+중복제거 → `sessionId` 단일 쿼리로 단순화. `PATCH /api/actions/:id`는 feedback→session, insight→session 체이닝 → `session` 직접 include로 단순화.
 
 ### 5.8 관리자 API (FEAT-011, FEAT-012)
 
@@ -714,7 +724,7 @@ export default defineEventHandler(async (event) => {
 | FEAT-000 | 인증 | `/api/auth/*`, `/api/teams/join` | SCR-000, 000-1, 000-2 | P0 |
 | FEAT-001 | 세션 생성 | `/api/sessions`, `/api/sessions/:id`, `/api/sessions/:id/close` | SCR-001, 002 | P0 |
 | FEAT-002 | 익명 피드백 | `/api/feedbacks` | SCR-003 | P0 |
-| FEAT-002-1 | AI 문체 변환 | `/api/feedbacks/transform` | SCR-003, 003-1 | P0 |
+| FEAT-002-1 | AI 문체 변환 | `/api/ai/transform` | SCR-003, 003-1 | P0 |
 | FEAT-003 | 참여 현황 | `/api/sessions/:id/stats` | SCR-003 | P1 |
 | FEAT-004 | 대시보드 | `/api/sessions/:id/dashboard` | SCR-004 | P0 |
 | FEAT-005 | AI 인사이트 | `/api/sessions/:id/insights` | SCR-004 | P0 |

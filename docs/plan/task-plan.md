@@ -14,7 +14,7 @@
 | 태스크 ID | 태스크 이름 | 관련 기능 | 담당 역할 |
 |-----------|------------|----------|----------|
 | TASK-001 | Nuxt 3 프로젝트 초기화 및 기본 설정 | 공통 | 풀스택 |
-| TASK-002 | Prisma + SQLite 데이터베이스 스키마 설계 및 마이그레이션 | 공통 | 백엔드 |
+| TASK-002 | Prisma + Turso(libSQL) 데이터베이스 스키마 설계 및 마이그레이션 | 공통 | 백엔드 |
 | TASK-003 | Tailwind CSS 설정 및 공통 레이아웃/GNB 구현 | 공통 | 프론트엔드 |
 | TASK-004 | 공통 UI 컴포넌트 구현 (버튼, 입력, 모달, 토스트, 뱃지) | 공통 | 프론트엔드 |
 
@@ -162,15 +162,16 @@
   - `.env.example`에 필요한 환경변수가 정의되어 있다
 - **담당 역할:** 풀스택
 
-### TASK-002: Prisma + SQLite 데이터베이스 스키마 설계 및 마이그레이션
+### TASK-002: Prisma + Turso(libSQL) 데이터베이스 스키마 설계 및 마이그레이션
 
 - **관련 기능:** 공통
-- **설명:** User, Team, Session, Feedback, Insight, ActionItem, Vote 등 핵심 테이블의 Prisma 스키마를 설계하고 마이그레이션을 실행한다. 3단계 권한(ADMIN/LEADER/MEMBER) 역할 enum을 포함한다.
+- **설명:** User, Team, Session, Feedback, Insight, ActionItem, Vote 등 핵심 테이블의 Prisma 스키마를 설계한다. 3단계 권한(ADMIN/LEADER/MEMBER) 역할 enum을 포함한다. 로컬 개발은 SQLite 파일, 배포는 Turso(libSQL)를 사용한다. ActionItem은 Sprint 2에서 `sessionId`, `issueIndex` 필드가 추가됐다 (쿼리 단순화 목적).
 - **완료 조건:**
   - Prisma 스키마 파일(`schema.prisma`)이 작성되어 있다
-  - `npx prisma migrate dev` 실행 시 에러 없이 마이그레이션이 완료된다
-  - Prisma Client가 정상적으로 생성된다
+  - 로컬: `npx prisma db push`로 스키마 적용, Turso: `npm run db:turso:push`로 적용
+  - `@prisma/adapter-libsql`을 통한 런타임 Turso 연결이 동작한다
   - Seed 데이터(최고관리자 계정, 샘플 팀)가 포함된다
+  - ActionItem에 `sessionId`(세션 직접 참조), `issueIndex`(인사이트 이슈 인덱스) 포함
 - **담당 역할:** 백엔드
 
 ### TASK-003: Tailwind CSS 설정 및 공통 레이아웃/GNB 구현
@@ -782,7 +783,7 @@
 | 태스크 ID | 태스크 이름 | 예상 시간 | SP |
 |-----------|------------|:---------:|:--:|
 | TASK-001 | Nuxt 3 프로젝트 초기화 | 1h | 1 |
-| TASK-002 | DB 스키마 설계 및 마이그레이션 | 2h | 3 |
+| TASK-002 | DB 스키마 설계 및 Turso 마이그레이션 | 2h | 3 |
 | TASK-003 | 공통 레이아웃/GNB 구현 | 2h | 2 |
 | TASK-004 | 공통 UI 컴포넌트 구현 | 2h | 3 |
 | TASK-005 | 회원가입 API | 1h | 2 |
@@ -852,7 +853,7 @@
 | 태스크 ID | 태스크 이름 | 예상 시간 | SP | 일차 |
 |-----------|------------|:---------:|:--:|:----:|
 | TASK-001 | Nuxt 3 프로젝트 초기화 | 1h | 1 | Day 1 오전 |
-| TASK-002 | DB 스키마 설계 및 마이그레이션 | 2h | 3 | Day 1 오전 |
+| TASK-002 | DB 스키마 설계 및 Turso 마이그레이션 | 2h | 3 | Day 1 오전 |
 | TASK-003 | 공통 레이아웃/GNB 구현 | 2h | 2 | Day 1 오전 |
 | TASK-004 | 공통 UI 컴포넌트 구현 | 2h | 3 | Day 1 오후 |
 | TASK-005 | 회원가입 API | 1h | 2 | Day 1 오후 |
@@ -965,7 +966,7 @@
 
 | 태스크 ID | 태스크 이름 | 예상 시간 | SP |
 |-----------|------------|:---------:|:--:|
-| TASK-002 | DB 스키마 설계 및 마이그레이션 | 2h | 3 |
+| TASK-002 | DB 스키마 설계 및 Turso 마이그레이션 | 2h | 3 |
 | TASK-005 | 회원가입 API | 1h | 2 |
 | TASK-006 | 로그인/로그아웃 API + JWT | 1.5h | 2 |
 | TASK-007 | 권한 미들웨어 | 1h | 2 |
