@@ -2,7 +2,7 @@
 
 - **작성일:** 2026-03-14
 - **기반 문서:** PRD v1.2.0, architecture.md v1.0.0, screen-plan.md v1.0.0, plan-2/changes.md, plan-2/api.md
-- **버전:** 1.0.0
+- **버전:** 1.1.0
 
 ---
 
@@ -721,7 +721,50 @@ coverage: {
 }
 ```
 
-### 5.5 테스트 실행 순서
+### 5.5 브라우저 코드 커버리지 제외 전략
+
+`composables/`, `pages/`, `components/` 디렉토리는 Vitest 커버리지 측정에서 **의도적으로 제외**된다. 그 이유와 대체 검증 방법은 다음과 같다.
+
+#### 제외 이유
+
+| 분류 | 이유 |
+|------|------|
+| Nuxt composable (`useState`, `useCookie`, `useRoute`) | Nuxt 런타임 컨텍스트 없이는 호출 불가 — Vitest(Node.js)에서 `Nuxt instance unavailable` 오류 발생 |
+| Vue lifecycle hook (`onMounted`, `watch`) | DOM 없는 환경(Node.js)에서는 실행 불가 |
+| `$fetch` / `useFetch` | Nuxt HTTP 레이어에 의존, 서버가 없으면 호출 불가 |
+| `pages/*.vue` | 라우터·레이아웃·플러그인 등 전체 Nuxt 앱 컨텍스트 필요 |
+
+```typescript
+// vitest.config.ts — 브라우저 코드 커버리지 제외 설정
+coverage: {
+  exclude: [
+    'composables/**',
+    'pages/**',
+    'components/**',
+    'layouts/**',
+    'middleware/**',
+    'plugins/**',
+    'nuxt.config.ts',
+  ],
+}
+```
+
+#### 대체 검증 계층
+
+브라우저 코드는 Vitest 커버리지 대신 **Playwright E2E 테스트**로 검증한다.
+
+| 검증 대상 | Vitest | Playwright E2E |
+|----------|--------|----------------|
+| `server/api/**` (서버 로직) | ✅ 69% 커버리지 측정 | - |
+| `server/utils/**` (JWT, 검증) | ✅ 측정 | - |
+| `composables/useAuth.ts` | ❌ 제외 | ✅ TC-046 로그인→me 플로우 |
+| `composables/useFeedback.ts` | ❌ 제외 | ✅ TC-047~048 피드백 제출 |
+| `pages/dashboard.vue` | ❌ 제외 | ✅ TC-049 인사이트 생성 렌더링 |
+| `components/GNB.vue` | ❌ 제외 | ✅ TC-046 네비게이션 이동 |
+
+**결론:** 비즈니스 로직의 핵심(서버 API, 유틸)은 Vitest 69% 커버리지로 검증하고, 브라우저 UI/UX 흐름은 Playwright 25개 E2E 시나리오로 검증한다. 두 계층 합산 시 실제 기능 커버리지는 더 높다.
+
+### 5.6 테스트 실행 순서
 
 1. **단위 테스트** — 외부 의존성 없이 빠르게 실행 (prisma, claude API 모킹)
 2. **통합 테스트** — 테스트 전용 SQLite DB 사용, 각 테스트 전 DB 초기화
