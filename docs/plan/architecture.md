@@ -112,23 +112,28 @@ retrolens/
 │   │   │   ├── index.post.ts      # 세션 생성          FEAT-001
 │   │   │   ├── [id].get.ts        # 세션 상세          FEAT-001
 │   │   │   └── [id]/
-│   │   │       ├── close.post.ts  # 세션 마감          FEAT-001
-│   │   │       ├── stats.get.ts   # 참여 현황          FEAT-003
-│   │   │       └── dashboard.get.ts # 대시보드 데이터   FEAT-004
+│   │   │       ├── close.patch.ts   # 세션 마감         FEAT-001
+│   │   │       ├── feedbacks.get.ts # 피드백 목록       FEAT-002
+│   │   │       ├── feedbacks.post.ts # 피드백 제출(익명) FEAT-002
+│   │   │       ├── stats.get.ts     # 참여 현황         FEAT-003
+│   │   │       ├── insights.get.ts  # 인사이트 조회     FEAT-005
+│   │   │       ├── insights.post.ts # AI 인사이트 생성  FEAT-005
+│   │   │       ├── insights.delete.ts # 인사이트 삭제   FEAT-005
+│   │   │       ├── actions.get.ts   # 액션 아이템 목록  FEAT-008
+│   │   │       ├── actions.post.ts  # 액션 아이템 생성  FEAT-008
+│   │   │       └── history.get.ts   # 활동 이력         FEAT-009
+│   │   ├── ai/
+│   │   │   └── transform.post.ts  # AI 문체 변환 (폴백: 원문 반환) FEAT-002-1
 │   │   ├── feedbacks/
-│   │   │   ├── index.post.ts      # 피드백 제출 (익명) FEAT-002
-│   │   │   └── transform.post.ts  # AI 문체 변환       FEAT-002-1
-│   │   ├── votes/
-│   │   │   ├── index.post.ts      # 투표               FEAT-006
-│   │   │   └── index.delete.ts    # 투표 취소           FEAT-006
+│   │   │   └── [id]/
+│   │   │       ├── vote.post.ts   # 투표               FEAT-006
+│   │   │       └── vote.delete.ts # 투표 취소           FEAT-006
+│   │   ├── actions/
+│   │   │   └── [id].patch.ts      # 액션 아이템 상태 변경 FEAT-008
 │   │   ├── insights/
-│   │   │   ├── generate.post.ts   # AI 인사이트 생성    FEAT-005
 │   │   │   ├── [id]/
-│   │   │   │   └── share.put.ts   # 인사이트 공유 토글  FEAT-007
+│   │   │   │   └── share.patch.ts # 인사이트 공유 토글  FEAT-007
 │   │   │   └── shared.get.ts      # 공유된 인사이트 목록 FEAT-007
-│   │   ├── action-items/
-│   │   │   ├── index.post.ts      # 액션 아이템 생성    FEAT-008
-│   │   │   └── [id].put.ts        # 상태 변경           FEAT-008
 │   │   └── admin/
 │   │       ├── users/
 │   │       │   ├── index.get.ts   # 사용자 목록         FEAT-011
@@ -438,40 +443,46 @@ User ──────────── Team
 | GET | `/api/sessions` | 본인 팀 세션 목록 | O | ALL | - | `{sessions[]}` | FEAT-001 |
 | POST | `/api/sessions` | 세션 생성 | O | LEADER+ | `{title, projectName, periodStart?, periodEnd?}` | `{session}` | FEAT-001 |
 | GET | `/api/sessions/:id` | 세션 상세 | O | TEAM | - | `{session}` | FEAT-001 |
-| POST | `/api/sessions/:id/close` | 세션 마감 | O | LEADER+ | - | `{session}` | FEAT-001 |
-| GET | `/api/sessions/:id/stats` | 참여 현황 | O | TEAM | - | `{total, keep, problem, try}` | FEAT-003 |
-| GET | `/api/sessions/:id/dashboard` | 대시보드 데이터 | O | TEAM | - | `{feedbacks[], insight?}` | FEAT-004 |
+| PATCH | `/api/sessions/:id/close` | 세션 마감 | O | LEADER+ | - | `{session}` | FEAT-001 |
+| GET | `/api/sessions/:id/stats` | 참여 현황 (K/P/T 카운트 + 참여자 수) | O | TEAM | - | `{KEEP, PROBLEM, TRY, participants}` | FEAT-003 |
+| GET | `/api/sessions/:id/history` | 세션 활동 이력 | O | TEAM | - | `{activities[]}` | FEAT-009 |
 
 ### 5.4 피드백 API (FEAT-002, FEAT-002-1)
 
 | 메서드 | 경로 | 설명 | 인증 | 권한 | 요청 Body | 응답 | 관련 기능 |
 |--------|------|------|------|------|----------|------|----------|
-| POST | `/api/feedbacks` | 피드백 제출 (익명) | O | TEAM | `{sessionId, category, content}` | `{success}` | FEAT-002 |
-| POST | `/api/feedbacks/transform` | AI 문체 변환 | O | TEAM | `{content}` | `{transformed}` | FEAT-002-1 |
+| GET | `/api/sessions/:id/feedbacks` | 세션 피드백 목록 | O | TEAM | - | `{feedbacks[]}` | FEAT-002 |
+| POST | `/api/sessions/:id/feedbacks` | 피드백 제출 (익명) | O | TEAM | `{category, content, userSessionId?}` | `{feedback}` | FEAT-002 |
+| POST | `/api/ai/transform` | AI 문체 변환 (폴백: 원문 반환) | O | TEAM | `{content}` | `{original, transformed, transformFailed}` | FEAT-002-1 |
 
-> **익명성 구현:** `/api/feedbacks` POST 핸들러에서 JWT로 팀 소속을 검증한 후, DB 저장 시 userId를 의도적으로 제외한다. 요청 로그에도 피드백 내용과 사용자를 연결하는 정보를 기록하지 않는다.
+> **익명성 구현:** `/api/sessions/:id/feedbacks` POST 핸들러에서 JWT로 팀 소속을 검증한 후, DB 저장 시 userId를 의도적으로 제외한다.
+>
+> **AI 폴백:** `/api/ai/transform`은 Claude API 실패 시 원문을 `transformed`로 반환하고 `transformFailed: true`를 응답한다. 클라이언트는 이 플래그로 사용자에게 원문 제출 여부를 안내한다.
 
 ### 5.5 투표 API (FEAT-006)
 
 | 메서드 | 경로 | 설명 | 인증 | 권한 | 요청 Body | 응답 | 관련 기능 |
 |--------|------|------|------|------|----------|------|----------|
-| POST | `/api/votes` | 투표 | O | TEAM | `{feedbackId}` | `{vote}` | FEAT-006 |
-| DELETE | `/api/votes` | 투표 취소 | O | TEAM | `{feedbackId}` | `{success}` | FEAT-006 |
+| POST | `/api/feedbacks/:id/vote` | 투표 | O | TEAM | - | `{vote}` | FEAT-006 |
+| DELETE | `/api/feedbacks/:id/vote` | 투표 취소 | O | TEAM | - | `{success}` | FEAT-006 |
 
 ### 5.6 인사이트 API (FEAT-005, FEAT-007)
 
 | 메서드 | 경로 | 설명 | 인증 | 권한 | 요청 Body | 응답 | 관련 기능 |
 |--------|------|------|------|------|----------|------|----------|
-| POST | `/api/insights/generate` | AI 인사이트 생성 | O | LEADER+ | `{sessionId}` | `{insight}` | FEAT-005 |
-| PUT | `/api/insights/:id/share` | 공유 토글 | O | LEADER+ | `{isShared}` | `{insight}` | FEAT-007 |
+| GET | `/api/sessions/:id/insights` | 인사이트 조회 | O | TEAM | - | `{insight \| null}` | FEAT-005 |
+| POST | `/api/sessions/:id/insights` | AI 인사이트 생성 (폴백: 샘플 데이터) | O | LEADER+ | `{useFallback?}` | `{insight} \| {isFallback, preview}` | FEAT-005 |
+| DELETE | `/api/sessions/:id/insights` | 인사이트 삭제 | O | LEADER+ | - | `{success}` | FEAT-005 |
+| PATCH | `/api/insights/:id/share` | 공유 토글 | O | LEADER+ | `{isShared}` | `{insight}` | FEAT-007 |
 | GET | `/api/insights/shared` | 공유된 인사이트 목록 | O | ALL | - | `{insights[]}` | FEAT-007 |
 
 ### 5.7 액션 아이템 API (FEAT-008)
 
 | 메서드 | 경로 | 설명 | 인증 | 권한 | 요청 Body | 응답 | 관련 기능 |
 |--------|------|------|------|------|----------|------|----------|
-| POST | `/api/action-items` | 액션 아이템 생성 | O | LEADER+ | `{content, feedbackId?, insightId?, assigneeId?, dueDate?}` | `{actionItem}` | FEAT-008 |
-| PUT | `/api/action-items/:id` | 상태 변경 | O | TEAM | `{status, assigneeId?, dueDate?}` | `{actionItem}` | FEAT-008 |
+| GET | `/api/sessions/:id/actions` | 액션 아이템 목록 | O | TEAM | - | `{actions[]}` | FEAT-008 |
+| POST | `/api/sessions/:id/actions` | 액션 아이템 생성 | O | LEADER+ | `{content, issueIndex?, assigneeId?, dueDate?}` | `{action}` | FEAT-008 |
+| PATCH | `/api/actions/:id` | 상태/담당자/기한 변경 | O | TEAM | `{status?, assigneeId?, dueDate?}` | `{action}` | FEAT-008 |
 
 ### 5.8 관리자 API (FEAT-011, FEAT-012)
 
@@ -706,10 +717,10 @@ export default defineEventHandler(async (event) => {
 | FEAT-002-1 | AI 문체 변환 | `/api/feedbacks/transform` | SCR-003, 003-1 | P0 |
 | FEAT-003 | 참여 현황 | `/api/sessions/:id/stats` | SCR-003 | P1 |
 | FEAT-004 | 대시보드 | `/api/sessions/:id/dashboard` | SCR-004 | P0 |
-| FEAT-005 | AI 인사이트 | `/api/insights/generate` | SCR-004 | P0 |
-| FEAT-006 | 투표 | `/api/votes` | SCR-004 | P1 |
+| FEAT-005 | AI 인사이트 | `/api/sessions/:id/insights` | SCR-004 | P0 |
+| FEAT-006 | 투표 | `/api/feedbacks/:id/vote` | SCR-004 | P1 |
 | FEAT-007 | 인사이트 공유 | `/api/insights/:id/share`, `/api/insights/shared` | SCR-004, 005 | P1 |
-| FEAT-008 | 액션 아이템 | `/api/action-items` | SCR-004 | P1 |
+| FEAT-008 | 액션 아이템 | `/api/sessions/:id/actions`, `/api/actions/:id` | SCR-004 | P1 |
 | FEAT-009 | 히스토리 비교 | (대시보드 API 확장) | SCR-004 | P1 |
 | FEAT-010 | 팀 관리 | `/api/teams/*` | SCR-007 | P1 |
 | FEAT-011 | 사용자 관리 | `/api/admin/users/*` | SCR-008 | P1 |

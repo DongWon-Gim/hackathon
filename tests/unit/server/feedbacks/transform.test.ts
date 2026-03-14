@@ -28,18 +28,20 @@ describe('POST /api/ai/transform', () => {
     expect(mockClaudeTransform).toHaveBeenCalledWith(originalText)
   })
 
-  // TC-025: Claude API 호출 실패 시 502 AI_SERVICE_ERROR
-  it('[TC-025] Claude API 호출 실패 시 502 AI_SERVICE_ERROR를 반환한다', async () => {
+  // TC-025: Claude API 호출 실패 시 원문 반환 폴백 (transformFailed: true)
+  it('[TC-025] Claude API 호출 실패 시 원문을 반환하고 transformFailed: true를 응답한다', async () => {
     mockClaudeTransform.mockRejectedValue(new Error('API Error'))
+    const originalText = '원본 텍스트'
 
     const event = createMockEvent({
-      body: { content: '원본 텍스트' },
+      body: { content: originalText },
     })
+    const result = await handler(event)
 
-    await expect(handler(event)).rejects.toMatchObject({
-      statusCode: 502,
-      data: { code: 'AI_SERVICE_ERROR' },
-    })
+    // AI 실패 시 에러를 throw하지 않고 원문 반환 (사용자가 계속 제출 가능)
+    expect(result.original).toBe(originalText)
+    expect(result.transformed).toBe(originalText)
+    expect(result.transformFailed).toBe(true)
   })
 
   // TC-026: 빈 텍스트로 변환 요청 시 400 VALIDATION_ERROR
