@@ -20,7 +20,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 | 프레임워크 | Nuxt 3 (Vue 3 + TypeScript) — 서버/클라이언트 통합, 파일 기반 라우팅 |
 | 스타일링 | Tailwind CSS |
 | 백엔드 API | Nuxt Server Routes (`server/api/`) |
-| 데이터베이스 | SQLite + Prisma ORM |
+| 데이터베이스 | Turso (libSQL/SQLite 호환) + Prisma ORM |
 | 인증 | JWT (jsonwebtoken) + bcrypt, httpOnly 쿠키 |
 | AI | Anthropic Claude Haiku (`claude-haiku-4-5-20251001`) |
 | 배포 | Vercel |
@@ -59,7 +59,8 @@ npx prisma db seed
 환경변수는 `.env` 파일에 설정한다 (`.env.example` 참조):
 - `JWT_SECRET` — JWT 서명 키
 - `ANTHROPIC_API_KEY` — Claude API 키
-- `DATABASE_URL` — SQLite 파일 경로 (예: `file:./dev.db`)
+- `TURSO_DATABASE_URL` — Turso DB URL (로컬: `file:./dev.db`, 프로덕션: `libsql://xxx.turso.io`)
+- `TURSO_AUTH_TOKEN` — Turso 인증 토큰 (로컬 파일 사용 시 빈 문자열)
 
 ---
 

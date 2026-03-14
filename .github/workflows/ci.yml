@@ -58,7 +58,8 @@ jobs:
         run: npm run build
         env:
           # Dummy values for build-time validation (not used at runtime)
-          DATABASE_URL: file:./ci.db
+          TURSO_DATABASE_URL: file:./ci.db
+          TURSO_AUTH_TOKEN: ""
           JWT_SECRET: ci-build-secret
           ANTHROPIC_API_KEY: sk-dummy-build-key
 
@@ -71,7 +72,8 @@ jobs:
     needs: lint
     env:
       # Use a separate SQLite file for CI test isolation
-      DATABASE_URL: file:./test.db
+      TURSO_DATABASE_URL: file:./test.db
+      TURSO_AUTH_TOKEN: ""
       JWT_SECRET: ${{ secrets.JWT_SECRET || 'ci-test-secret-for-pr' }}
       ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY || 'sk-dummy-test-key' }}
 
@@ -91,8 +93,8 @@ jobs:
       - name: Generate Prisma client
         run: npx prisma generate
 
-      - name: Run database migrations (test DB)
-        run: npx prisma migrate deploy
+      - name: Push schema to test DB
+        run: npx prisma db push --force-reset
 
       - name: Run unit and integration tests with coverage
         run: npx vitest run --coverage

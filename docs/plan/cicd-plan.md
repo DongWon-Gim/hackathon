@@ -11,7 +11,7 @@
 | 항목 | 선택 | 근거 |
 |------|------|------|
 | CI/CD 플랫폼 | GitHub Actions | 코드 저장소와 동일 플랫폼, 무료 티어 충분, Vercel 공식 통합 지원 |
-| 컨테이너 | 불필요 (ubuntu-latest 러너) | SQLite 파일 기반 DB로 별도 컨테이너 불필요, 해커톤 단순성 우선 |
+| 컨테이너 | 불필요 (ubuntu-latest 러너) | Turso 원격 DB로 별도 컨테이너 불필요, 해커톤 단순성 우선 |
 | 배포 대상 | Vercel | Nuxt 3 네이티브 지원, 브랜치별 Preview 배포 자동화, 무료 티어 |
 | 패키지 매니저 | npm | 프로젝트 기본 설정 (`package-lock.json` 존재) |
 
@@ -102,6 +102,10 @@ PR merge 전 반드시 통과해야 하는 조건:
 | `VERCEL_TOKEN` | Vercel API 토큰 | GitHub Repository Secrets |
 | `VERCEL_ORG_ID` | Vercel 조직 ID | GitHub Repository Secrets |
 | `VERCEL_PROJECT_ID` | Vercel 프로젝트 ID | GitHub Repository Secrets |
+| `TURSO_DATABASE_URL` | Turso Production DB URL | GitHub Repository Secrets |
+| `TURSO_AUTH_TOKEN` | Turso Production 인증 토큰 | GitHub Repository Secrets |
+| `TURSO_DATABASE_URL_STAGING` | Turso Staging DB URL | GitHub Repository Secrets |
+| `TURSO_AUTH_TOKEN_STAGING` | Turso Staging 인증 토큰 | GitHub Repository Secrets |
 | `JWT_SECRET` | JWT 서명 키 (CI 테스트용) | GitHub Repository Secrets |
 | `ANTHROPIC_API_KEY` | Claude API 키 (CI 테스트용) | GitHub Repository Secrets |
 
@@ -111,7 +115,8 @@ Vercel 대시보드에서 환경별로 아래 변수를 설정한다:
 
 | 변수 | Staging | Production |
 |------|---------|------------|
-| `DATABASE_URL` | `file:./staging.db` | `file:./prod.db` |
+| `TURSO_DATABASE_URL` | Turso Staging DB URL | Turso Production DB URL |
+| `TURSO_AUTH_TOKEN` | Staging 인증 토큰 | Production 인증 토큰 |
 | `JWT_SECRET` | Staging용 시크릿 | Production용 시크릿 |
 | `ANTHROPIC_API_KEY` | 공용 API 키 | 공용 API 키 |
 

@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npx nuxi:*)",
+      "Bash(timeout 15 npm run:*)",
+      "Bash(git add:*)",
+      "Bash(cd C:/workspace/hackathonAI && npm run build 2>&1)"
+    ]
+  }
+}
