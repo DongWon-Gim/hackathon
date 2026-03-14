@@ -189,9 +189,14 @@
               >
                 {{ action.content }}
               </p>
-              <p v-if="action.dueDate" class="text-xs text-ink-muted mt-0.5">
-                기한: {{ new Date(action.dueDate).toLocaleDateString('ko-KR') }}
-              </p>
+              <div class="flex items-center gap-2 mt-0.5 flex-wrap">
+                <p v-if="action.assigneeName" class="text-xs text-ink-muted">
+                  👤 {{ action.assigneeName }}
+                </p>
+                <p v-if="action.dueDate" class="text-xs text-ink-muted">
+                  📅 {{ new Date(action.dueDate).toLocaleDateString('ko-KR') }}
+                </p>
+              </div>
             </div>
           </div>
         </div>
@@ -287,6 +292,10 @@
               rows="3"
               placeholder="액션 아이템 내용을 입력하세요"
             />
+            <select v-model="newActionAssigneeId" class="input w-full text-sm">
+              <option value="">담당자 없음</option>
+              <option v-for="m in teamMembers" :key="m.id" :value="m.id">{{ m.name }}</option>
+            </select>
             <input
               v-model="newActionDueDate"
               type="date"
@@ -526,9 +535,15 @@ const { data: actions, refresh: refreshActions } = await useFetch<ActionItem[]>(
   { lazy: true }
 )
 
+const { data: teamMembers } = await useFetch<{ id: string; name: string; role: string }[]>(
+  '/api/teams/members',
+  { lazy: true, default: () => [] }
+)
+
 const showActionModal = ref(false)
 const prefillIssueIndex = ref<number | null>(null)
 const newActionContent = ref('')
+const newActionAssigneeId = ref('')
 const newActionDueDate = ref('')
 const savingAction = ref(false)
 const togglingAction = ref(new Set<string>())
@@ -547,6 +562,7 @@ function cancelActionForm() {
   showActionModal.value = false
   prefillIssueIndex.value = null
   newActionContent.value = ''
+  newActionAssigneeId.value = ''
   newActionDueDate.value = ''
 }
 
@@ -558,8 +574,8 @@ async function addAction() {
       method: 'POST',
       body: {
         content: newActionContent.value.trim(),
+        ...(newActionAssigneeId.value ? { assigneeId: newActionAssigneeId.value } : {}),
         ...(newActionDueDate.value ? { dueDate: newActionDueDate.value } : {}),
-        ...(insight.value?.id ? { insightId: insight.value.id } : {}),
         ...(prefillIssueIndex.value !== null ? { issueIndex: prefillIssueIndex.value } : {})
       }
     })
