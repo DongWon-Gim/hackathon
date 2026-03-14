@@ -26,7 +26,10 @@
         :key="session.id"
         :to="session.status === 'ACTIVE' ? `/session/${session.id}` : `/session/${session.id}/dashboard`"
         class="card-hover flex items-center justify-between"
-        :class="session.hasInsight ? 'border-accent/50 shadow-glow' : ''"
+        :class="[
+          session.status === 'CLOSED' ? '!bg-elevated' : '',
+          session.hasInsight ? 'border-accent/50 shadow-glow' : ''
+        ]"
       >
         <div class="flex-1 min-w-0">
           <div class="flex items-center gap-2 mb-1 flex-wrap">
@@ -34,7 +37,7 @@
               :label="session.status === 'ACTIVE' ? '● 진행중' : '마감'"
               :variant="session.status === 'ACTIVE' ? 'active' : 'closed'"
             />
-            <Badge v-if="session.hasInsight" label="🤖 인사이트" variant="insight" />
+            <span v-if="session.hasInsight" class="text-xs text-accent font-medium bg-accent/10 px-1.5 py-0.5 rounded-full border border-accent/20">인사이트</span>
             <span v-if="session.hasSharedInsight" class="text-xs text-accent font-medium bg-accent/10 px-1.5 py-0.5 rounded-full border border-accent/20">공유됨</span>
             <span class="text-xs text-ink-muted font-mono">{{ formatDate(session.createdAt) }}</span>
           </div>
