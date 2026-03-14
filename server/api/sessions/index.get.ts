@@ -12,13 +12,14 @@ export default defineEventHandler(async (event) => {
     include: {
       creator: { select: { name: true } },
       _count: { select: { feedbacks: true } },
-      insights: { where: { isShared: true }, select: { id: true }, take: 1 }
+      insights: { select: { id: true, isShared: true }, take: 1, orderBy: { createdAt: 'desc' } }
     }
   })
 
   return sessions.map((s) => ({
     ...s,
-    hasSharedInsight: s.insights.length > 0,
+    hasInsight: s.insights.length > 0,
+    hasSharedInsight: s.insights.some(i => i.isShared),
     insights: undefined
   }))
 })

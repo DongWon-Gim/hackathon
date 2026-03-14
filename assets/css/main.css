@@ -78,11 +78,15 @@
   }
 
   .badge-active {
-    @apply badge bg-success/15 text-success border border-success/25;
+    @apply badge bg-success text-white border border-success/80 shadow-sm;
   }
 
   .badge-closed {
-    @apply badge bg-ink-subtle/30 text-ink-muted border border-border;
+    @apply badge bg-ink-subtle/20 text-ink-subtle border border-ink-subtle/30;
+  }
+
+  .badge-insight {
+    @apply badge bg-try/15 text-try border border-try/30;
   }
 
   .badge-keep {

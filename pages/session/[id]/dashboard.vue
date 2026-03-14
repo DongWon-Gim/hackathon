@@ -92,6 +92,16 @@
               {{ insight.isShared ? '🔓 공유 중' : '🔒 비공개' }}
             </button>
             <button
+              v-if="isLeader && insight"
+              class="text-xs px-2 py-1 rounded-md border border-danger/30 text-danger/60 hover:text-danger hover:bg-danger/10 transition-colors"
+              :disabled="deletingInsight"
+              @click="deleteInsight"
+              title="인사이트 삭제 (테스트용)"
+            >
+              <LoadingSpinner v-if="deletingInsight" size="sm" />
+              <span v-else>🗑</span>
+            </button>
+            <button
               v-if="isLeader && !insight && session.status === 'CLOSED'"
               class="btn-primary text-xs"
               :disabled="generatingInsight || !hasFeedbacks"
@@ -192,6 +202,7 @@ const { data: insight, refresh: refreshInsight } = await useFetch<Insight | null
 
 const generatingInsight = ref(false)
 const togglingShare = ref(false)
+const deletingInsight = ref(false)
 const showFallbackModal = ref(false)
 const savingFallback = ref(false)
 const fallbackPreview = ref<{ summary: string; issues: { title: string; description: string; action: string }[] } | null>(null)
@@ -289,6 +300,20 @@ async function generateInsight() {
     toast.error('인사이트 생성에 실패했습니다')
   } finally {
     generatingInsight.value = false
+  }
+}
+
+async function deleteInsight() {
+  if (!confirm('인사이트를 삭제하시겠습니까?')) return
+  deletingInsight.value = true
+  try {
+    await $fetch(`/api/sessions/${route.params.id}/insights`, { method: 'DELETE' })
+    await refreshInsight()
+    toast.success('인사이트가 삭제되었습니다')
+  } catch {
+    toast.error('삭제에 실패했습니다')
+  } finally {
+    deletingInsight.value = false
   }
 }
 

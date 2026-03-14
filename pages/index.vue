@@ -26,17 +26,22 @@
         :key="session.id"
         :to="session.status === 'ACTIVE' ? `/session/${session.id}` : `/session/${session.id}/dashboard`"
         class="card-hover flex items-center justify-between"
+        :class="session.hasInsight ? 'border-try/30' : ''"
       >
-        <div>
-          <div class="flex items-center gap-2 mb-1">
-            <Badge :label="session.status === 'ACTIVE' ? '진행중' : '마감'" :variant="session.status === 'ACTIVE' ? 'active' : 'closed'" />
-            <span v-if="session.hasSharedInsight" class="text-xs text-accent font-medium bg-accent/10 px-1.5 py-0.5 rounded">🤖 인사이트 공유됨</span>
+        <div class="flex-1 min-w-0">
+          <div class="flex items-center gap-2 mb-1 flex-wrap">
+            <Badge
+              :label="session.status === 'ACTIVE' ? '● 진행중' : '마감'"
+              :variant="session.status === 'ACTIVE' ? 'active' : 'closed'"
+            />
+            <Badge v-if="session.hasInsight" label="🤖 인사이트" variant="insight" />
+            <span v-if="session.hasSharedInsight" class="text-xs text-accent font-medium bg-accent/10 px-1.5 py-0.5 rounded-full border border-accent/20">공유됨</span>
             <span class="text-xs text-ink-muted font-mono">{{ formatDate(session.createdAt) }}</span>
           </div>
-          <h2 class="font-semibold text-ink">{{ session.title }}</h2>
-          <p class="text-xs text-ink-muted mt-0.5">{{ session.projectName }}</p>
+          <h2 class="font-semibold text-ink truncate">{{ session.title }}</h2>
+          <p class="text-xs text-ink-muted mt-0.5 truncate">{{ session.projectName }}</p>
         </div>
-        <svg class="w-4 h-4 text-ink-muted flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <svg class="w-4 h-4 text-ink-muted flex-shrink-0 ml-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
         </svg>
       </NuxtLink>
