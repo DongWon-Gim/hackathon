@@ -28,6 +28,40 @@
         </div>
       </div>
 
+      <!-- 팀별 통계 -->
+      <div class="card overflow-hidden mb-4">
+        <div class="px-4 py-3 border-b border-border">
+          <p class="section-label">팀별 현황</p>
+        </div>
+        <table class="w-full text-sm">
+          <thead>
+            <tr class="border-b border-border">
+              <th class="text-left px-4 py-3 text-xs text-ink-muted font-medium uppercase tracking-wide">팀명</th>
+              <th class="text-left px-4 py-3 text-xs text-ink-muted font-medium uppercase tracking-wide">세션</th>
+              <th class="text-left px-4 py-3 text-xs text-ink-muted font-medium uppercase tracking-wide">피드백</th>
+              <th class="text-left px-4 py-3 text-xs text-ink-muted font-medium uppercase tracking-wide">참여자</th>
+            </tr>
+          </thead>
+          <tbody>
+            <template v-if="sortedTeamStats.length > 0">
+              <tr
+                v-for="row in sortedTeamStats"
+                :key="row.teamId"
+                class="border-b border-border/50 hover:bg-elevated/50 transition-colors"
+              >
+                <td class="px-4 py-3 font-medium text-ink">{{ row.teamName }}</td>
+                <td class="px-4 py-3 text-ink-muted">{{ row.sessionCount }}</td>
+                <td class="px-4 py-3 text-ink-muted">{{ row.feedbackCount }}</td>
+                <td class="px-4 py-3 text-ink-muted">{{ row.participantCount }}</td>
+              </tr>
+            </template>
+            <tr v-else>
+              <td colspan="4" class="px-4 py-6 text-center text-ink-muted text-xs">데이터 없음</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
       <!-- Quick links -->
       <div class="grid grid-cols-2 gap-4">
         <NuxtLink to="/admin/teams" class="card-hover p-5 flex items-center gap-4">
@@ -57,5 +91,11 @@ const { data: stats, pending } = await useFetch<{
   userCount: number
   sessionCount: number
   feedbackCount: number
+  teamStats: { teamId: string; teamName: string; sessionCount: number; feedbackCount: number; participantCount: number }[]
 }>('/api/admin/stats')
+
+const sortedTeamStats = computed(() => {
+  if (!stats.value?.teamStats) return []
+  return [...stats.value.teamStats].sort((a, b) => b.feedbackCount - a.feedbackCount)
+})
 </script>

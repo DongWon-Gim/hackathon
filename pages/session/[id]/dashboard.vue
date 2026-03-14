@@ -138,6 +138,154 @@
           </div>
         </template>
       </div>
+
+      <!-- Action Items -->
+      <div class="card p-5 mt-6">
+        <div class="flex items-center justify-between mb-4">
+          <p class="section-label">액션 아이템</p>
+          <button
+            v-if="isLeader"
+            class="btn-primary text-xs"
+            @click="showActionForm = !showActionForm"
+          >
+            +
+          </button>
+        </div>
+
+        <!-- Add form -->
+        <div v-if="showActionForm" class="mb-4 p-3 bg-elevated rounded-lg border border-border space-y-3">
+          <textarea
+            v-model="newActionContent"
+            class="input w-full text-sm resize-none"
+            rows="2"
+            placeholder="액션 아이템 내용을 입력하세요"
+          />
+          <input
+            v-model="newActionDueDate"
+            type="date"
+            class="input w-full text-sm"
+          />
+          <div class="flex gap-2 justify-end">
+            <button class="btn-ghost text-xs" @click="cancelActionForm">취소</button>
+            <button
+              class="btn-primary text-xs"
+              :disabled="!newActionContent.trim() || savingAction"
+              @click="addAction"
+            >
+              <LoadingSpinner v-if="savingAction" size="sm" />
+              {{ savingAction ? '저장 중...' : '저장' }}
+            </button>
+          </div>
+        </div>
+
+        <EmptyState
+          v-if="!actions?.length"
+          message="액션 아이템이 없습니다"
+          icon="✅"
+        />
+
+        <div v-else class="space-y-2">
+          <div
+            v-for="action in actions"
+            :key="action.id"
+            class="flex items-start gap-3 p-3 bg-elevated rounded-lg border border-border transition-opacity"
+            :class="action.status === 'COMPLETED' ? 'opacity-60' : ''"
+          >
+            <input
+              type="checkbox"
+              :checked="action.status === 'COMPLETED'"
+              class="mt-0.5 accent-accent cursor-pointer"
+              :disabled="togglingAction.has(action.id)"
+              @change="toggleAction(action)"
+            />
+            <div class="flex-1 min-w-0">
+              <p
+                class="text-sm text-ink leading-relaxed"
+                :class="action.status === 'COMPLETED' ? 'line-through text-ink-muted' : ''"
+              >
+                {{ action.content }}
+              </p>
+              <p v-if="action.dueDate" class="text-xs text-ink-muted mt-0.5">
+                기한: {{ new Date(action.dueDate).toLocaleDateString('ko-KR') }}
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- History Comparison -->
+      <div class="mt-6">
+        <button
+          class="btn-ghost text-xs mb-3"
+          @click="showHistory = !showHistory"
+        >
+          {{ showHistory ? '▲ 히스토리 비교 닫기' : '▼ 히스토리 비교' }}
+        </button>
+
+        <div v-if="showHistory" class="card p-5">
+          <p class="section-label mb-4">히스토리 비교</p>
+
+          <div v-if="historyPending" class="text-center py-8 text-sm text-ink-muted">
+            히스토리를 불러오는 중...
+          </div>
+
+          <template v-else-if="history">
+            <div
+              v-if="history.sessions.length <= 1"
+              class="text-sm text-ink-muted text-center py-6"
+            >
+              비교할 세션이 부족합니다
+            </div>
+
+            <template v-else>
+              <!-- Repeated issues warning banner -->
+              <div
+                v-if="history.repeatedTitles?.length"
+                class="flex items-center gap-2 mb-4 px-3 py-2 bg-danger/10 border border-danger/30 rounded-lg text-sm text-danger"
+              >
+                ⚠️ {{ history.repeatedTitles.length }}개 반복 이슈 발견
+              </div>
+
+              <!-- Sessions grid -->
+              <div
+                class="grid gap-4 overflow-x-auto pb-2"
+                :style="{ gridTemplateColumns: `repeat(${Math.min(history.sessions.length, 5)}, minmax(180px, 1fr))` }"
+              >
+                <div
+                  v-for="s in history.sessions.slice(0, 5)"
+                  :key="s.id"
+                  class="bg-elevated rounded-lg border border-border p-3 min-w-0"
+                >
+                  <p class="text-xs font-semibold text-ink truncate mb-0.5">{{ s.title }}</p>
+                  <p class="text-xs text-ink-muted mb-3">
+                    {{ new Date(s.createdAt).toLocaleDateString('ko-KR') }}
+                  </p>
+                  <div class="space-y-2">
+                    <div
+                      v-for="(issue, i) in s.issues"
+                      :key="i"
+                      class="p-2 bg-base rounded border-l-2 text-xs leading-snug"
+                      :class="history.repeatedTitles?.includes(issue.title)
+                        ? 'border-danger text-danger'
+                        : 'border-accent text-ink'"
+                    >
+                      <p class="font-medium mb-0.5">{{ issue.title }}</p>
+                      <p class="text-ink-muted text-[11px]">{{ issue.description }}</p>
+                      <p
+                        class="mt-1 text-[11px]"
+                        :class="history.repeatedTitles?.includes(issue.title) ? 'text-danger' : 'text-accent'"
+                      >
+                        → {{ issue.action }}
+                      </p>
+                    </div>
+                    <p v-if="!s.issues?.length" class="text-xs text-ink-muted">이슈 없음</p>
+                  </div>
+                </div>
+              </div>
+            </template>
+          </template>
+        </div>
+      </div>
     </template>
   </div>
 
@@ -190,6 +338,37 @@
 
 <script setup lang="ts">
 import type { Session, Feedback, Insight } from '~/types'
+
+interface ActionItem {
+  id: string
+  content: string
+  status: 'PENDING' | 'COMPLETED'
+  dueDate?: string | null
+  assigneeId?: string | null
+  assigneeName?: string | null
+  feedbackId?: string | null
+  insightId?: string | null
+  createdAt: string
+}
+
+interface HistoryIssue {
+  title: string
+  description: string
+  action: string
+}
+
+interface HistorySession {
+  id: string
+  title: string
+  createdAt: string
+  status: string
+  issues: HistoryIssue[]
+}
+
+interface SessionHistory {
+  sessions: HistorySession[]
+  repeatedTitles: string[]
+}
 
 const route = useRoute()
 const { isLeader } = useAuth()
@@ -333,6 +512,75 @@ async function saveFallback() {
     savingFallback.value = false
   }
 }
+
+// ── Action Items (TASK-033) ──────────────────────────────────────────────────
+const { data: actions, refresh: refreshActions } = await useFetch<ActionItem[]>(
+  `/api/sessions/${route.params.id}/actions`,
+  { lazy: true }
+)
+
+const showActionForm = ref(false)
+const newActionContent = ref('')
+const newActionDueDate = ref('')
+const savingAction = ref(false)
+const togglingAction = ref(new Set<string>())
+
+function cancelActionForm() {
+  showActionForm.value = false
+  newActionContent.value = ''
+  newActionDueDate.value = ''
+}
+
+async function addAction() {
+  if (!newActionContent.value.trim()) return
+  savingAction.value = true
+  try {
+    await $fetch(`/api/sessions/${route.params.id}/actions`, {
+      method: 'POST',
+      body: {
+        content: newActionContent.value.trim(),
+        ...(newActionDueDate.value ? { dueDate: newActionDueDate.value } : {})
+      }
+    })
+    await refreshActions()
+    cancelActionForm()
+    toast.success('액션 아이템이 추가되었습니다')
+  } catch {
+    toast.error('액션 아이템 추가에 실패했습니다')
+  } finally {
+    savingAction.value = false
+  }
+}
+
+async function toggleAction(action: ActionItem) {
+  togglingAction.value = new Set(togglingAction.value).add(action.id)
+  const nextStatus = action.status === 'COMPLETED' ? 'PENDING' : 'COMPLETED'
+  try {
+    await $fetch(`/api/actions/${action.id}`, {
+      method: 'PATCH',
+      body: { status: nextStatus }
+    })
+    await refreshActions()
+  } catch {
+    toast.error('상태 변경에 실패했습니다')
+  } finally {
+    const next = new Set(togglingAction.value)
+    next.delete(action.id)
+    togglingAction.value = next
+  }
+}
+
+// ── History Comparison (TASK-035) ────────────────────────────────────────────
+const showHistory = ref(false)
+
+const { data: history, pending: historyPending, execute: fetchHistory } = await useFetch<SessionHistory>(
+  `/api/sessions/${route.params.id}/history`,
+  { lazy: true, immediate: false }
+)
+
+watch(showHistory, (val) => {
+  if (val && !history.value) fetchHistory()
+})
 </script>
 
 
