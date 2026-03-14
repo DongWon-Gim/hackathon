@@ -31,9 +31,9 @@ export default defineEventHandler(async (event) => {
     throw ERROR.UNAUTHORIZED()
   }
 
-  // 계정 비활성화 여부 실시간 확인
-  const user = await prisma.user.findUnique({ where: { id: payload.userId }, select: { isActive: true } })
-  if (!user || !user.isActive) {
+  // 계정 비활성화 여부 실시간 확인 (DB 오류 시 JWT 검증만으로 통과)
+  const dbUser = await prisma.user.findUnique({ where: { id: payload.userId }, select: { isActive: true } }).catch(() => undefined)
+  if (dbUser !== undefined && !dbUser.isActive) {
     throw ERROR.UNAUTHORIZED()
   }
 

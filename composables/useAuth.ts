@@ -7,7 +7,8 @@ export function useAuth() {
 
   async function fetchMe() {
     try {
-      const data = await $fetch<{ user: AuthUser }>('/api/auth/me')
+      const apiFetch = useRequestFetch()
+      const data = await apiFetch<{ user: AuthUser }>('/api/auth/me')
       user.value = data.user
     } catch {
       user.value = null
