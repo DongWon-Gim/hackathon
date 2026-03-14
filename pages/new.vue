@@ -17,9 +17,9 @@
         <div>
           <label class="input-label">회고 기간 (선택)</label>
           <div class="flex items-center gap-3">
-            <input v-model="form.periodStart" type="date" class="input" />
+            <DateInput v-model="form.periodStart" />
             <span class="text-ink-muted text-sm flex-shrink-0">~</span>
-            <input v-model="form.periodEnd" type="date" class="input" />
+            <DateInput v-model="form.periodEnd" />
           </div>
         </div>
 

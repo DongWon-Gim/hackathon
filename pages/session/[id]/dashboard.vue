@@ -296,11 +296,7 @@
               <option value="">담당자 없음</option>
               <option v-for="m in teamMembers" :key="m.id" :value="m.id">{{ m.name }}</option>
             </select>
-            <input
-              v-model="newActionDueDate"
-              type="date"
-              class="input w-full text-sm"
-            />
+            <DateInput v-model="newActionDueDate" input-class="w-full text-sm" />
           </div>
           <div class="flex gap-2 justify-end mt-4">
             <button class="btn-ghost text-sm" @click="cancelActionForm">취소</button>
