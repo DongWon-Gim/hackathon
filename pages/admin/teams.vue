@@ -91,9 +91,10 @@
           <div class="relative z-10 card max-w-sm w-full p-6">
             <h3 class="font-display font-bold text-ink mb-4">팀 생성</h3>
             <label class="input-label">팀명</label>
-            <input v-model="newTeamName" type="text" class="input mb-4" placeholder="예: 개발1팀" />
+            <input v-model="newTeamName" type="text" class="input mb-3" placeholder="예: 개발1팀" @input="createError = ''" />
+            <p v-if="createError" class="text-xs text-danger bg-danger/10 border border-danger/20 rounded-lg px-3 py-2 mb-3">{{ createError }}</p>
             <div class="flex gap-3">
-              <button class="btn-ghost flex-1" @click="showCreateForm = false">취소</button>
+              <button class="btn-ghost flex-1" @click="showCreateForm = false; createError = ''">취소</button>
               <button class="btn-primary flex-1" @click="createTeam">생성</button>
             </div>
           </div>
@@ -109,6 +110,7 @@ definePageMeta({ middleware: 'admin-only' })
 const toast = useToast()
 const showCreateForm = ref(false)
 const newTeamName = ref('')
+const createError = ref('')
 
 const expandedTeamId = ref<string | null>(null)
 const membersLoading = ref(false)
@@ -179,14 +181,15 @@ function roleBadgeClass(role: string) {
 
 async function createTeam() {
   if (!newTeamName.value.trim()) return
+  createError.value = ''
   try {
     await $fetch('/api/teams', { method: 'POST', body: { name: newTeamName.value } })
     toast.success('팀이 생성되었습니다')
     newTeamName.value = ''
     showCreateForm.value = false
     await refresh()
-  } catch {
-    toast.error('팀 생성에 실패했습니다')
+  } catch (e: any) {
+    createError.value = e?.data?.data?.message ?? '팀 생성에 실패했습니다'
   }
 }
 
