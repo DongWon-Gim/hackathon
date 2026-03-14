@@ -13,8 +13,11 @@ export default defineEventHandler(async (event) => {
     throw ERROR.VALIDATION_ERROR('팀 이름은 필수입니다')
   }
 
+  const seg = () => Math.floor(1000 + Math.random() * 9000).toString()
+  const inviteCode = `${seg()}-${seg()}-${seg()}`
+
   const team = await prisma.team.create({
-    data: { name: name.trim() }
+    data: { name: name.trim(), inviteCode }
   })
 
   return {
