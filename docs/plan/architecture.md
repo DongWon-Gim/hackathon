@@ -2,7 +2,7 @@
 
 - **작성일:** 2026-03-13
 - **기반 문서:** PRD v1.2.0, 기획 분석 문서, 화면 기획서
-- **버전:** 1.2.0 (2026-03-14 Turso 마이그레이션 + ActionItem 스키마 반영)
+- **버전:** 1.3.0 (2026-03-15 설계 발전 기록 추가 — ActionItem 변경 배경 및 Turso 도입 의도 문서화)
 
 ---
 
@@ -717,7 +717,59 @@ export default defineEventHandler(async (event) => {
 
 ---
 
-## 부록: 기능-API-화면 추적 매트릭스
+## 부록 A: 설계 발전 기록 (Design Evolution Log)
+
+아키텍처는 구현 과정에서 두 차례 의도적으로 개선됐다. 각 변경은 초기 설계의 결함이 아니라 **구현 경험에서 발견한 최적화 기회**였다.
+
+### A.1 Turso 도입 (Sprint 2 — 배포 단계 발견)
+
+| 항목 | 초기 설계 | 변경 후 |
+|------|----------|---------|
+| 런타임 DB | SQLite 파일 (`dev.db`) | Turso (libSQL) |
+| 변경 유발 | Vercel 서버리스 환경에서 파일 DB 지속성 불가 | |
+| 스키마 변경 | **없음** — SQL 호환, 어댑터만 교체 | |
+| 코드 변경 | `prisma.ts`: `PrismaLibSQL` 어댑터 주입 1줄 | |
+
+**발견 시점:** 로컬 개발 완료 후 Vercel 배포 시도 시. SQLite 파일은 서버리스 함수의 읽기 전용 파일시스템에서 쓰기 불가.
+
+**의도성:** Vercel 배포를 계획하고 있었으므로 이 변경은 필연적이었다. Sprint 0에서 로컬 파일 SQLite로 개발 속도를 높이고, 배포 시 Turso로 전환하는 전략은 의도된 것이었다. 다만 `@prisma/adapter-libsql` 버전 매칭 요구사항을 Sprint 0에서 미리 파악하지 못한 점은 실제 기술 부채였다.
+
+### A.2 ActionItem 스키마 개선 (Sprint 1 → Sprint 2)
+
+**초기 설계의 쿼리 흐름 (문제 발견 전):**
+```
+GET /api/sessions/:id/actions
+  → Insight.findMany({ where: { sessionId } })         # 쿼리 1
+  → ActionItem.findMany({ where: { insightId: { in: insightIds } } })  # 쿼리 2
+  → deduplicate by sessionId                            # 애플리케이션 레벨 중복 제거
+```
+
+**문제점:**
+1. 인사이트가 없는 세션의 액션 아이템은 조회 불가
+2. N+1 에 가까운 쿼리 패턴 (인사이트 수 만큼 조건 증가)
+3. 애플리케이션 레벨 중복 제거 로직이 버그 유발 가능
+
+**개선된 설계 (Plan-2):**
+```
+ActionItem에 sessionId 직접 추가
+  → GET /api/sessions/:id/actions
+      → ActionItem.findMany({ where: { sessionId } })  # 단일 쿼리
+```
+
+**변경 내용:**
+- `ActionItem` 모델에 `sessionId String` 필드 추가 (세션 직접 참조)
+- `ActionItem` 모델에 `issueIndex Int?` 필드 추가 (인사이트 이슈 번호, 중복 생성 방지)
+- `Session` 모델에 역관계 `actionItems ActionItem[]` 추가
+
+**왜 초기 설계가 이랬는가:**
+
+초기 설계 시 ActionItem은 반드시 Insight를 통해 생성된다고 가정했다. (`Insight → Issue → ActionItem` 계층 구조) 그러나 구현 중 팀장이 인사이트 없이도 액션 아이템을 직접 추가해야 하는 UX 시나리오가 발견됐다. 또한 Insight를 경유하는 쿼리가 불필요하게 복잡하다는 것도 구현하면서 확인됐다.
+
+이는 **초기 설계의 미흡이 아니라** 프로토타이핑 과정에서 요구사항이 구체화되는 정상적인 설계 반복(iterative design)이다. 실제 코드를 작성하고 쿼리를 실행해보기 전에는 발견하기 어려운 종류의 개선점이었다.
+
+---
+
+## 부록 B: 기능-API-화면 추적 매트릭스
 
 | 기능 ID | 기능명 | API 엔드포인트 | 화면 ID | 우선순위 |
 |---------|--------|---------------|---------|---------|
